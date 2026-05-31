@@ -589,6 +589,58 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
   .psetup-row select { display:none; }
 }
 
+/* ═══ HEX MAP ═══ */
+.map-wrap {
+  background: rgba(10,14,10,0.85);
+  border: 1px solid rgba(200,144,48,0.2);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+}
+.map-controls {
+  display: flex; gap: 0.5rem; flex-wrap: wrap;
+  margin-bottom: 0.75rem; align-items: center;
+}
+.terrain-btn {
+  display: flex; align-items: center; gap: 0.3rem;
+  background: rgba(242,232,204,0.05);
+  border: 1px solid rgba(200,144,48,0.2);
+  color: var(--vellum3); padding: 0.25rem 0.6rem;
+  border-radius: 3px; cursor: pointer;
+  font-family: 'IM Fell English', serif; font-size: 0.78rem;
+  transition: all 0.15s; white-space: nowrap;
+}
+.terrain-btn:hover { background: rgba(242,232,204,0.1); }
+.terrain-btn.selected {
+  border-color: var(--gold2);
+  background: rgba(200,144,48,0.18);
+  color: var(--gold3);
+}
+.map-divider {
+  width: 1px; height: 22px;
+  background: rgba(200,144,48,0.2);
+  flex-shrink: 0;
+}
+.map-hint {
+  font-size: 0.7rem; color: var(--storm2);
+  font-style: italic; margin-left: auto;
+}
+#hexCanvas {
+  display: block;
+  margin: 0 auto;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.map-legend {
+  display: flex; flex-wrap: wrap; gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 0.3rem;
+  font-size: 0.68rem; color: var(--vellum4);
+}
+
 /* ═══ INFO PANEL ═══ */
 .info-drawer {
   background:rgba(18,14,8,0.95);
@@ -739,6 +791,32 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
     <!-- Players -->
     <div class="sec-title">Spieler</div>
     <div class="players-grid" id="playersGrid"></div>
+
+    <!-- Hex Map -->
+    <div class="sec-title">Spielfeld</div>
+    <div class="map-wrap">
+      <div class="map-controls">
+        <span style="font-family:'IM Fell English SC',serif;font-size:0.65rem;letter-spacing:0.15em;color:var(--storm2)">TERRAIN</span>
+        <button class="terrain-btn selected" data-terrain="plains"   onclick="selectTerrain(this)">🌾 Ebene</button>
+        <button class="terrain-btn" data-terrain="forest"   onclick="selectTerrain(this)">🌲 Wald</button>
+        <button class="terrain-btn" data-terrain="mountain" onclick="selectTerrain(this)">⛰ Gebirge</button>
+        <button class="terrain-btn" data-terrain="coast"    onclick="selectTerrain(this)">🌊 Küste</button>
+        <button class="terrain-btn" data-terrain="volcano"  onclick="selectTerrain(this)">🌋 Asche</button>
+        <button class="terrain-btn" data-terrain="aether"   onclick="selectTerrain(this)">⚡ Aether</button>
+        <button class="terrain-btn" data-terrain="ruins"    onclick="selectTerrain(this)">🏛 Ruinen</button>
+        <button class="terrain-btn" data-terrain="river"    onclick="selectTerrain(this)">〰 Fluss</button>
+        <div class="map-divider"></div>
+        <span style="font-family:'IM Fell English SC',serif;font-size:0.65rem;letter-spacing:0.15em;color:var(--storm2)">GEBÄUDE</span>
+        <button class="terrain-btn" data-terrain="settlement" onclick="selectTerrain(this)">🏘 Siedlung</button>
+        <button class="terrain-btn" data-terrain="city"       onclick="selectTerrain(this)">🏙 Stadt</button>
+        <button class="terrain-btn" data-terrain="fortress"   onclick="selectTerrain(this)">🏰 Festung</button>
+        <div class="map-divider"></div>
+        <button class="terrain-btn" data-terrain="empty" onclick="selectTerrain(this)">✕ Löschen</button>
+        <span class="map-hint">Klick = Terrain setzen · Rechtsklick = Fraktion wählen</span>
+      </div>
+      <canvas id="hexCanvas"></canvas>
+      <div class="map-legend" id="mapLegend"></div>
+    </div>
 
     <!-- Input Section -->
     <div class="sec-title">Rundenabschluss</div>
@@ -905,6 +983,7 @@ function startGame() {
   document.getElementById('dispScenario').textContent = n <= 3 ? SCENARIOS[n].split('—')[0].trim() : SCENARIOS[n].split('—')[0].trim();
   updateHUD();
   renderPlayers();
+  setTimeout(() => { initMap(); updateMapLegend(); }, 60);
 }
 
 // ══════════════════════════════
@@ -1045,6 +1124,7 @@ AKTUELLE SPIELSITUATION:
 ${textVal ? `- Spielerbericht: ${textVal}` : '- [Spielfeld-Foto wurde übermittelt]'}
 ${hintStr}
 - Letzte Ereignisse: ${recent}
+- Spielfeld: ${mapSnapshot()}
 ${grauStr}
 
 SPIELWELT-KONTEXT:
@@ -1241,8 +1321,270 @@ function addEvent(raw, type) {
 }
 
 // ══════════════════════════════
-//  ROUND
+//  HEX MAP ENGINE
 // ══════════════════════════════
+const MAP = {
+  cols: 9, rows: 7,
+  hexR: 28,           // radius (Spitze zu Spitze / 2)
+  grid: [],           // [{terrain, owner, building}]
+  selectedTerrain: 'plains',
+  ctx: null,
+  canvas: null,
+};
+
+// Terrain-Definitionen
+const TERRAIN_DEF = {
+  plains:     { fill:'#2a3a1a', stroke:'#4a6a2a', icon:'🌾', label:'Ebene'   },
+  forest:     { fill:'#1a2e1a', stroke:'#2a5a2a', icon:'🌲', label:'Wald'    },
+  mountain:   { fill:'#2a2a2a', stroke:'#5a5a5a', icon:'⛰',  label:'Gebirge' },
+  coast:      { fill:'#0e2030', stroke:'#2a5a7a', icon:'🌊', label:'Küste'   },
+  volcano:    { fill:'#2a1010', stroke:'#6a2010', icon:'🌋', label:'Asche'   },
+  aether:     { fill:'#1a0a2a', stroke:'#6a30a0', icon:'⚡', label:'Aether'  },
+  ruins:      { fill:'#201a10', stroke:'#6a5a30', icon:'🏛',  label:'Ruinen'  },
+  river:      { fill:'#0e1e2a', stroke:'#2a6a8a', icon:'〰', label:'Fluss'   },
+  empty:      { fill:'#0d0f0e', stroke:'#2a2a28', icon:'',   label:'Leer'    },
+  settlement: { fill:null,      stroke:null,       icon:'🏘', label:'Siedlung'},
+  city:       { fill:null,      stroke:null,       icon:'🏙', label:'Stadt'   },
+  fortress:   { fill:null,      stroke:null,       icon:'🏰', label:'Festung' },
+};
+
+// Fraktion-Farben für Besitz-Ring
+const FAC_COLORS = {
+  eisengilde: '#c45a2a',
+  tidenrat:   '#2a8878',
+  nebelwacht: '#6a3898',
+  sonnenbund: '#c89030',
+  wildklinge: '#4a7828',
+  grauasche:  '#a82020',
+  none:       null,
+};
+
+function initMap() {
+  MAP.canvas = document.getElementById('hexCanvas');
+  MAP.ctx    = MAP.canvas.getContext('2d');
+  // Init grid: default-Terrain nach Position
+  MAP.grid = [];
+  const PRESET = [
+    'forest','forest','mountain','mountain','aether','mountain','mountain','forest','forest',
+    'forest','plains','mountain','ruins','plains','ruins','mountain','plains','forest',
+    'coast','plains','plains','plains','plains','plains','plains','plains','coast',
+    'coast','coast','plains','plains','ruins','plains','plains','coast','coast',
+    'coast','plains','plains','plains','plains','plains','plains','plains','coast',
+    'forest','plains','volcano','ruins','plains','ruins','volcano','plains','forest',
+    'forest','forest','volcano','volcano','aether','volcano','volcano','forest','forest',
+  ];
+  for (let i=0; i<MAP.cols*MAP.rows; i++) {
+    MAP.grid.push({ terrain: PRESET[i]||'plains', owner:'none', building:null });
+  }
+  resizeMap();
+  drawMap();
+
+  MAP.canvas.addEventListener('click', onMapClick);
+  MAP.canvas.addEventListener('contextmenu', onMapRightClick);
+  window.addEventListener('resize', () => { resizeMap(); drawMap(); });
+}
+
+function resizeMap() {
+  const maxW = Math.min(MAP.canvas.parentElement.clientWidth - 32, 820);
+  const r    = Math.floor(maxW / (MAP.cols * 1.75 + 0.5));
+  MAP.hexR   = Math.max(18, Math.min(r, 36));
+  const w    = hexGridWidth();
+  const h    = hexGridHeight();
+  MAP.canvas.width  = w;
+  MAP.canvas.height = h;
+}
+
+function hexGridWidth()  { return Math.ceil(MAP.cols * MAP.hexR * 1.732 + MAP.hexR * 0.866); }
+function hexGridHeight() { return Math.ceil(MAP.rows * MAP.hexR * 1.5   + MAP.hexR * 0.5 + 4); }
+
+// Hex-Mittelpunkt für flattop-offset-Koordinaten
+function hexCenter(col, row) {
+  const r  = MAP.hexR;
+  const w  = r * Math.sqrt(3);
+  const x  = w * col + (row % 2 === 1 ? w / 2 : 0) + w / 2;
+  const y  = r * 1.5 * row + r + 2;
+  return { x, y };
+}
+
+function hexPath(cx, cy, r) {
+  const path = new Path2D();
+  for (let i=0; i<6; i++) {
+    const a = Math.PI / 180 * (60 * i - 30);
+    const px = cx + r * Math.cos(a);
+    const py = cy + r * Math.sin(a);
+    i === 0 ? path.moveTo(px, py) : path.lineTo(px, py);
+  }
+  path.closePath();
+  return path;
+}
+
+function drawMap() {
+  const ctx = MAP.ctx;
+  const r   = MAP.hexR;
+  ctx.clearRect(0, 0, MAP.canvas.width, MAP.canvas.height);
+
+  // Background
+  ctx.fillStyle = '#0a0d0a';
+  ctx.fillRect(0, 0, MAP.canvas.width, MAP.canvas.height);
+
+  for (let row=0; row<MAP.rows; row++) {
+    for (let col=0; col<MAP.cols; col++) {
+      const idx  = row * MAP.cols + col;
+      const cell = MAP.grid[idx];
+      const def  = TERRAIN_DEF[cell.terrain] || TERRAIN_DEF.plains;
+      const { x, y } = hexCenter(col, row);
+      const path = hexPath(x, y, r - 1);
+
+      // Fill
+      ctx.fillStyle = def.fill || '#0d0f0e';
+      ctx.fill(path);
+
+      // Owner ring
+      if (cell.owner && cell.owner !== 'none' && FAC_COLORS[cell.owner]) {
+        ctx.strokeStyle = FAC_COLORS[cell.owner];
+        ctx.lineWidth = 3;
+        ctx.stroke(hexPath(x, y, r - 2));
+      }
+
+      // Stroke
+      ctx.strokeStyle = def.stroke || '#2a2a28';
+      ctx.lineWidth = 1;
+      ctx.stroke(path);
+
+      // Terrain icon
+      if (def.icon) {
+        ctx.font = `${Math.floor(r * 0.72)}px serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(def.icon, x, y + (cell.building ? -r*0.22 : 0));
+      }
+
+      // Building overlay
+      if (cell.building) {
+        const bDef = TERRAIN_DEF[cell.building];
+        if (bDef?.icon) {
+          ctx.font = `${Math.floor(r * 0.5)}px serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(bDef.icon, x, y + r * 0.32);
+        }
+      }
+
+      // Coord label (tiny)
+      if (r >= 26) {
+        ctx.font = `${Math.floor(r * 0.26)}px JetBrains Mono, monospace`;
+        ctx.fillStyle = 'rgba(200,180,120,0.35)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${col+1},${row+1}`, x, y - r * 0.65);
+      }
+    }
+  }
+}
+
+function pixelToHex(px, py) {
+  const r = MAP.hexR;
+  const w = r * Math.sqrt(3);
+  for (let row=0; row<MAP.rows; row++) {
+    for (let col=0; col<MAP.cols; col++) {
+      const { x, y } = hexCenter(col, row);
+      const dx = px - x, dy = py - y;
+      if (Math.sqrt(dx*dx + dy*dy) < r * 0.92) return { col, row };
+    }
+  }
+  return null;
+}
+
+function onMapClick(e) {
+  e.preventDefault();
+  const rect = MAP.canvas.getBoundingClientRect();
+  const scaleX = MAP.canvas.width  / rect.width;
+  const scaleY = MAP.canvas.height / rect.height;
+  const px = (e.clientX - rect.left) * scaleX;
+  const py = (e.clientY - rect.top)  * scaleY;
+  const hex = pixelToHex(px, py);
+  if (!hex) return;
+  const idx  = hex.row * MAP.cols + hex.col;
+  const cell = MAP.grid[idx];
+  const t    = MAP.selectedTerrain;
+
+  if (t === 'empty') {
+    cell.terrain  = 'plains';
+    cell.building = null;
+    cell.owner    = 'none';
+  } else if (['settlement','city','fortress'].includes(t)) {
+    cell.building = t;
+  } else {
+    cell.terrain  = t;
+    cell.building = null;
+  }
+  drawMap();
+}
+
+function onMapRightClick(e) {
+  e.preventDefault();
+  const rect = MAP.canvas.getBoundingClientRect();
+  const scaleX = MAP.canvas.width  / rect.width;
+  const scaleY = MAP.canvas.height / rect.height;
+  const px = (e.clientX - rect.left) * scaleX;
+  const py = (e.clientY - rect.top)  * scaleY;
+  const hex = pixelToHex(px, py);
+  if (!hex) return;
+  const idx  = hex.row * MAP.cols + hex.col;
+  const cell = MAP.grid[idx];
+
+  // Cycle through active player factions
+  const facs = ['none', ...G.players.map(p=>p.fac.id)];
+  const cur  = facs.indexOf(cell.owner);
+  cell.owner = facs[(cur + 1) % facs.length];
+  drawMap();
+  updateMapLegend();
+}
+
+function selectTerrain(btn) {
+  document.querySelectorAll('.terrain-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  MAP.selectedTerrain = btn.dataset.terrain;
+}
+
+function updateMapLegend() {
+  const legend = document.getElementById('mapLegend');
+  if (!legend) return;
+  const counts = {};
+  G.players.forEach(p => { counts[p.fac.id] = 0; });
+  MAP.grid.forEach(c => { if (c.owner && c.owner !== 'none') counts[c.owner] = (counts[c.owner]||0)+1; });
+  legend.innerHTML = G.players.map(p => `
+    <div class="legend-item">
+      <div style="width:10px;height:10px;border-radius:2px;background:${p.fac.color};border:1px solid ${p.fac.color}"></div>
+      ${p.name}: <strong style="color:${p.fac.color}">${counts[p.fac.id]||0}</strong> Felder
+    </div>`).join('');
+}
+
+// Map-Snapshot als Text für den KI-Prompt
+function mapSnapshot() {
+  const terrainCount = {};
+  const ownerCount   = {};
+  const buildings    = [];
+  MAP.grid.forEach((c, i) => {
+    terrainCount[c.terrain] = (terrainCount[c.terrain]||0)+1;
+    if (c.owner && c.owner !== 'none') {
+      ownerCount[c.owner] = (ownerCount[c.owner]||0)+1;
+    }
+    if (c.building) {
+      const col = (i % MAP.cols)+1, row = Math.floor(i/MAP.cols)+1;
+      const pName = G.players.find(p=>p.fac.id===c.owner)?.name || c.owner;
+      buildings.push(`${TERRAIN_DEF[c.building].label} (${pName}) auf ${c.terrain} [${col},${row}]`);
+    }
+  });
+  const tc = Object.entries(terrainCount).map(([k,v])=>`${v}× ${TERRAIN_DEF[k]?.label||k}`).join(', ');
+  const oc = Object.entries(ownerCount).map(([k,v])=>{
+    const p = G.players.find(p=>p.fac.id===k);
+    return `${p?.name||k}: ${v} Felder`;
+  }).join(', ');
+  return `Spielfeld (9×7): ${tc}. Territorium: ${oc}.${buildings.length ? ' Gebäude: '+buildings.join('; ') : ''}`;
+}
+
+
 function nextRound() {
   if (G.round >= G.totalRounds) {
     const winner = G.players.reduce((a,b)=>a.pts>=b.pts?a:b);

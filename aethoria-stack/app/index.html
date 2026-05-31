@@ -588,6 +588,49 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
   .players-setup { grid-template-columns:1fr; }
   .psetup-row select { display:none; }
 }
+
+/* ═══ INFO PANEL ═══ */
+.info-drawer {
+  background:rgba(18,14,8,0.95);
+  border:1px solid rgba(200,144,48,0.3);
+  border-radius:6px;
+  margin-bottom:1.25rem;
+  overflow:hidden;
+  transition:all 0.3s;
+}
+.info-drawer-header {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:0.7rem 1rem; cursor:pointer;
+  border-bottom:1px solid rgba(200,144,48,0.15);
+}
+.info-drawer-header:hover { background:rgba(200,144,48,0.05); }
+.info-drawer-title {
+  font-family:'IM Fell English SC',serif;
+  font-size:0.72rem; letter-spacing:0.2em;
+  color:var(--gold2);
+}
+.info-drawer-arrow { color:var(--gold2); font-size:0.7rem; transition:transform 0.3s; }
+.info-drawer.open .info-drawer-arrow { transform:rotate(180deg); }
+.info-drawer-body {
+  display:none; padding:1rem 1.1rem;
+  max-height:320px; overflow-y:auto;
+}
+.info-drawer.open .info-drawer-body { display:block; }
+.info-tabs { display:flex; gap:0.4rem; margin-bottom:0.75rem; }
+.itab2 {
+  background:transparent;
+  border:1px solid rgba(200,144,48,0.2);
+  color:var(--storm2); padding:0.25rem 0.75rem;
+  border-radius:3px; cursor:pointer;
+  font-family:'IM Fell English',serif; font-size:0.78rem;
+  transition:all 0.2s;
+}
+.itab2.active { background:rgba(200,144,48,0.12); border-color:var(--gold2); color:var(--gold3); }
+.info-content {
+  font-size:0.82rem; line-height:1.65;
+  color:var(--vellum3); white-space:pre-wrap;
+  font-family:'IM Fell English',serif;
+}
 </style>
 </head>
 <body>
@@ -605,10 +648,28 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
     <div class="ollama-status" id="ollamaStatus">Nicht verbunden — Ollama konfigurieren</div>
     <div class="ollama-fields">
       <label>URL</label>
-      <input id="ollamaUrl" value="__OLLAMA_URL__" type="text">
+      <input id="ollamaUrl" value="__OLLAMA_URL__" placeholder="/ollama" type="text">
       <label>Modell</label>
       <input id="ollamaModel" value="__OLLAMA_MODEL__" type="text" style="width:100px">
       <button class="btn-connect" onclick="connectOllama()">Verbinden</button>
+    </div>
+  </div>
+
+
+  <!-- ═══ INFO DRAWER ═══ -->
+  <div class="info-drawer" id="infoDrawer">
+    <div class="info-drawer-header" onclick="toggleDrawer()">
+      <span class="info-drawer-title">📜 Spielwelt & Regeln — Referenz</span>
+      <span class="info-drawer-arrow" id="drawerArrow">▼</span>
+    </div>
+    <div class="info-drawer-body">
+      <div class="info-tabs">
+        <button class="itab2 active" onclick="switchInfo('lore',this)">⚔ Spielwelt & Lore</button>
+        <button class="itab2" onclick="switchInfo('rules',this)">📋 Regeln</button>
+        <button class="itab2" onclick="switchInfo('factions',this)">🛡 Fraktionen</button>
+        <button class="itab2" onclick="switchInfo('scoring',this)">⭐ Siegpunkte</button>
+      </div>
+      <div class="info-content" id="infoContent">Lade…</div>
     </div>
   </div>
 
@@ -967,6 +1028,12 @@ function buildPrompt(textVal, imgPresent, hint) {
     : '';
 
   return `Du bist die WELTMASCHINE des Brettspiels AETHORIA — Das Erbe der zerstörten Welt.
+Du kennst die komplette Spielwelt, alle Fraktionen, Regionen und Regeln.
+
+${getFullContext()}
+
+---
+AKTUELLER SPIELSTAND:
 Du spielst NICHT als einzelner Gegner, sondern als die lebendige Welt selbst: Wirtschaft, Wetter, Natur, Gesellschaft, Unfälle, politische Lage, Ökologie, Aether-Energie.
 
 AKTUELLE SPIELSITUATION:
@@ -1191,6 +1258,482 @@ function nextRound() {
   updateHUD();
   renderPlayers();
 }
+
+// ══════════════════════════════
+//  LORE & RULES DATA (eingebettet)
+// ══════════════════════════════
+const LORE_TEXT = `AETHORIA – Die Spielwelt
+✦ ✦ ✦
+AETHORIA
+Das Erbe der zerstörten Welt
+„In den Trümmern des Alten Reiches wächst neues Leben —
+doch die Welt vergisst nicht, was ihr angetan wurde."
+↓   Blättern   ↓
+Kapitel I
+Die Welt von Aethoria
+Inhalt
+Die Welt von Aethoria
+Das Spielfeld
+Die sechs Fraktionen
+Umweltfaktoren & Weltgeschehen
+Ziel & Siegpunkte
+Szenarien
+Rundenablauf
+Vor dreihundert Jahren zerbrach das Aethorische Reich in einer Nacht, die niemand vergisst: Die Magier des Turms von Kaelthas rissen in ihrem Hunger nach ewiger Energie ein Loch in das Gewebe der Welt. Flüsse begannen rückwärts zu fließen. Wälder brannten, ohne Feuer zu brauchen. Städte versanken in Erde, die wie Wasser wurde.
+Was blieb, war ein Kontinent in Scherben — und die Aetherwunden: glühende Risse im Boden, aus denen rohe Energie sickert, fruchtbar und tödlich zugleich. Wer sie kontrolliert, kann Städte bauen wie nie zuvor. Wer zu nah kommt, riskiert Mutationen, Wahnsinn, oder Schlimmeres.
+„Die Erde hält Groll. Sie erinnert sich, was wir ihr antaten — und jede Generation zahlt einen Teil der Schuld."
+— Alte Inschrift am Kaelthas-Brunnen
+Drei Jahrhunderte später erheben sich wieder Fraktionen aus dem Staub. Jede trägt ihre eigene Vision: Wiederherstellen, was war. Aufbauen, was sein könnte. Oder kontrollieren, was übrig bleibt. Ihr Werkzeug: Würfel, Karten, Klugheit — und die unberechenbare Welt selbst.
+Kapitel II
+Das Spielfeld
+Das Spielfeld zeigt den Kontinent Aethoria — ein sechseckiges Hexgitter von ca. 9×7 Feldern (63 Hexagone), aufgeteilt in sieben Regionen mit je eigenen Ressourcen, Gefahren und strategischem Wert.
+Tiefgrüner
+Waldgürtel
+Eisengebirge
+& Erzfelder
+Aetherwunden
+des Ostens
+Tiefseeküste
+& Häfen
+Zentralebene
+Kaelthas-Ruinen
+Aschefelder
+& Vulkangürtel
+Fruchtbare Südebenen — Kornkammer
+Die sieben Regionen
+Region
+Ressource
+Besonderheit
+Gefahr
+🌲 Tiefgrüner Waldgürtel
+Holz, Kräuter
+Versteckte Lager möglich
+Wildfeuer, Tier-Invasionen
+⛰️ Eisengebirge
+Erz, Stein
+Festungen +2 Verteidigung
+Lawinenrisiko, Erdrutsch
+🌌 Aetherwunden
+Aether-Kristalle
++3 SP bei Kontrolle
+Mutation, Aether-Sturm
+🌊 Tiefseeküste
+Fisch, Salz, Handel
+Schiffsrouten, Import
+Sturmseen, Piraten
+🏛️ Zentralebene
+Stein, Artefakte
+Siegpunkt-Multiplikator ×2
+Ruinen-Fluch, Instabilität
+🌋 Aschefelder
+Obsidian, Schwefel
+Spezialwaffen herstellbar
+Vulkanausbruch, Giftschwaden
+🌾 Südebenen
+Nahrung, Tiere
+Bevölkerungswachstum +1
+Dürre, Heuschreckenschwärme
+Felder-Typen
+Jedes Hexfeld ist eines von: Wald · Gebirge · Ebene · Küste · Ruine · Aetherwunde · Fluss. Gebäude und Einheiten haben je nach Feldtyp Boni oder Mali. Flüsse können als Transportwege oder Barrieren dienen — je nach Jahreszeit.
+Kapitel III
+Die sechs Fraktionen
+Jede Fraktion hat eine einzigartige Startposition, Spezialfähigkeit und ein geheimes Langzeitziel das neben den Siegpunkten gewertet wird. Ab 2 Spielern wählt man Fraktionen, die sich thematisch gegenüberstehen.
+⚒ Eisengilde
+„Aus Stahl wird Zukunft geschmiedet."
+Handwerker, Ingenieure und Minenbarone. Die Gilde kontrolliert die Erzfelder seit Generationen. Ihre Festungen sind die stärksten — aber ihre Abhängigkeit von Rohstoffen macht sie verwundbar bei Erdrutschen oder Blockaden.
+🏗 Bauen +2
+⚔ Kampf 0
+🌿 Natur –1
+Start: Eisengebirge
+🌊 Tidenrat
+„Wer die Meere kennt, kennt die Welt."
+Händler und Diplomaten der Küstenstädte. Ihre Stärke liegt in Handelsrouten und Allianzen — sie gewinnen Siegpunkte durch Abkommen, nicht Krieg. Ein plötzlicher Sturm oder eine Seuche kann ihre Routen jedoch auf einen Schlag zerstören.
+🤝 Handel +3
+⚓ Schiffe +2
+⚔ Kampf –1
+Start: Küste
+🌫 Nebelwacht
+„Wir sehen alles. Niemand sieht uns."
+Geheimnisvolle Hüter der Aetherwunden. Sie nutzen die Energie der Risse für Magie und Späher — aber jede Benutzung von Aether riskiert einen unkontrollierten Sturm. Ihre Karten ermöglichen mächtige Sofortaktionen.
+🔮 Aether +3
+👁 Spionage +2
+🏗 Bauen –1
+Start: Ostaetherwunde
+☀ Sonnenbund
+„Wachstum ist der einzige Frieden."
+Bauern, Priester und Stadtgründer der Südebenen. Sie wachsen langsam aber stetig — ihre Bevölkerung ist die größte, ihre Nahrungsversorgung die stärkste. Dürre oder Seuche trifft sie jedoch katastrophal.
+👥 Bevölkerung +3
+🌾 Nahrung +2
+⚔ Kampf –2
+Start: Südebenen
+🐺 Wildklinge
+„Die Wälder gehören denen, die sie fürchten."
+Nomadische Jäger und Waldläufer. Extrem mobil — ihre Einheiten bewegen sich doppelt im Wald. Keine Festungen, dafür blitzschnelle Überfälle und Sabotage. Ihre Schwäche: Sie können keine Städte bauen, nur Lager.
+🏹 Angriff +3
+🌲 Wald +2
+🏗 Gebäude –3
+Start: Waldgürtel
+💀 Grauasche
+„Was die Welt zerstörte, formen wir neu."
+Überlebende der ursprünglichen Katastrophe — entstellt, verbittert, mächtig. Sie siedeln in den Aschefeldern und können Vulkane als Waffe nutzen. Ihr Geheimziel: Den Kaelthas-Turm wieder aktivieren. Das wäre entweder der größte Sieg — oder das Ende aller.
+🌋 Vulkan +3
+☠ Flüche +2
+🤝 Handel –3
+Start: Aschefelder
+Jede Fraktion hat ein verdecktes Geheimziel — eine Karte, die nur der jeweilige Spieler kennt. Am Spielende wird es aufgedeckt und gibt 0–8 Bonuspunkte. Das Geheimziel kann die Partie komplett drehen.
+Kapitel IV
+Umweltfaktoren & Weltgeschehen
+Die Welt von Aethoria ist kein stilles Spielbrett. Sie lebt, atmet, reagiert. Nach jeder Runde — bevor die nächste beginnt — zieht die KI-Weltmaschine ein Ereignis, das direkt auf das reagiert, was die Spieler gebaut, zerstört oder vernachlässigt haben.
+Die fünf Weltdimensionen
+Wirtschaft & Handel
+Märkte schwanken. Rohstoffpreise steigen und fallen. Handelsrouten entstehen oder kollabieren. Wer viel baut, treibt Inflation — wer hoarded, riskiert Aufstände.
+Wetter & Klima
+Jahreszeiten wechseln. Dürren, Überschwemmungen, frühe Winter. Viel Rodung erhöht das Risiko von Erdrutschen. Die Welt reagiert auf Eingriffe in den Wasserhaushalt.
+Unfälle & Katastrophen
+Bergwerksunglücke, Brückenbrüche, Seuchen. Zu dichte Bebauung erhöht das Risiko. Wer keine Heiler oder Notlager hat, leidet doppelt.
+Politik & Gesellschaft
+Völkerwanderungen, Aufstände, Diplomatie zwischen Fraktionen. Eine unterdrückte Bevölkerung rebelliert. Zu viel Militär macht Nachbarn nervös.
+Ökologie & Natur
+Tierherden wandern ein oder aus. Wälder regenerieren oder sterben. Aetherwunden weiten sich aus. Wer die Natur ignoriert, verliert langfristig ihre Ressourcen.
+Wie die Weltmaschine reagiert
+Nach jeder Runde fotografiert oder beschreibt ein Spieler den aktuellen Spielstand. Die KI (Ollama lokal) analysiert: Welche Region wurde stark besiedelt? Wo wurde gerodet, gekämpft, gebaut? Sie antwortet mit einem Weltereignis — narrativ und mit konkreten Spieleffekten:
+Beispiel: Zwei Spieler haben beide im Waldgürtel gleichzeitig gerodet und Holz gehortet. Die KI reagiert: „Ein Trockenriss zieht durch das entblößte Erdreich. Ein Funke — und der Tiefgrüne Waldgürtel steht in Flammen. Alle Holzlager verlieren 2 Einheiten. Lager-Felder im Waldgürtel sind diese Runde gesperrt."
+Weltlage-Skala
+Die Welt hat eine Stabilitätsskala von 6 Stufen: Blühend → Stabil → Angespannt → Unruhig → Krisenhaft → Chaotisch. Je mehr aggressive Aktionen, unkontrollierte Aether-Nutzung oder Naturzerstörung, desto weiter dreht sich die Skala nach unten. Bei Chaotisch werden alle Ereignisse doppelt so stark — die Welt eskaliert.
+Kapitel V
+Ziel & Siegpunkte
+Das Spiel endet nach der vereinbarten Rundenanzahl (Standard: 10 Runden). Dann werden alle Siegpunkte addiert. Wer die meisten hat, gewinnt — aber das Geheimziel kann alles noch einmal umdrehen.
+Quelle
+Bedingung
+🏘 Stadt gebaut
+Pro fertiggestellte Stadt
+🏰 Festung gebaut
+Pro Festung (max. 4)
+🗺 Gebiet kontrolliert
+Pro Gebiet zu Rundenende
+🏛 Zentralebene
+Alle SP verdoppelt für kontrollierte Felder
+⚡ Aetherwunde
+Pro vollständig kontrollierter Wunde
+🤝 Handelsabkommen
+Pro aktiver Route zu Rundenende
+👥 Bevölkerung
+Pro 3 Bevölkerungseinheiten
+🃏 Ereigniskarte gespielt
+Je nach Kartenwert
+🎯 Geheimziel erfüllt
+Aufgedeckt am Spielende
+⚠ Weltkatastrophe verursacht
+Pro Ereignis der KI direkt zugeschrieben
+Das Geheimziel ist entscheidend: Ein Spieler kann die ganze Partie in letzter Position liegen und durch ein perfekt ausgeführtes Geheimziel gewinnen. Beispiele: „Kontrolliere 3 Flussmündungen", „Habe keine Militäreinheiten am Spielende", „Die Grauasche darf nie die Zentralebene betreten."
+Kapitel VI
+Szenarien
+Je nach Spieleranzahl verändert sich die Dynamik drastisch. Jedes Szenario hat eigene Startbedingungen, Sonderregeln und empfohlene Fraktions-Paarungen.
+2 Spieler · Duell
+⚔ „Die letzte Wahl"
+Eisengilde vs. Tidenrat — oder Wildklinge vs. Sonnenbund. Beide Spieler starten auf gegenüberliegenden Kontinenthälften. Die Zentralebene ist neutral und wird erst ab Runde 4 begehbar. Geheimziele sind aggressiver: Zerstöre 2 gegnerische Städte, Kontrolliere alle Flussfelder. Die Weltmaschine reagiert stärker, da weniger Spieler die Schäden kompensieren können. Empfohlene Rundenzahl: 8
+3 Spieler · Dreieck
+🔺 „Das wackelige Gleichgewicht"
+Drei Fraktionen, drei Ecken. Allianzen sind erlaubt aber enden automatisch nach 2 Runden. Die KI-Weltmaschine bevorzugt Ereignisse, die den Führenden schwächen. Empfohlene Rundenzahl: 9
+4 Spieler · Standard
+🌍 „Das neue Erbe" (ausbalanciert)
+Das Hauptszenario. Alle vier Quartanten des Spielfelds sind gleich groß. Ressourcenverteilung ist ausgewogen. Die Weltmaschine läuft auf normaler Intensität. Alle Fraktionen ausser Grauasche können gewählt werden — oder Grauasche ersetzt eine andere und bringt die Geheimziel-Dynamik ins Spiel. Empfohlene Rundenzahl: 10
+5–6 Spieler · Episch
+🌋 „Aethorias letzter Tag"
+Alle sechs Fraktionen. Die Grauasche hat ein öffentliches Ziel: Den Kaelthas-Turm in Runde 12 zu aktivieren. Wenn ihnen das gelingt, verlieren alle anderen gleichzeitig — außer wer eine Allianz mit ihnen hat. Dynamik: Ständige Spannung zwischen „die Grauasche aufhalten" und „selbst Punkte sammeln". Die Weltmaschine eskaliert ab Runde 8 automatisch um eine Stufe. Empfohlene Rundenzahl: 15
+Kapitel VII
+Rundenablauf
+Jede Runde folgt demselben Ablauf — einfach genug für Einsteiger, tief genug für Strategen:
+Phase 1 · Würfeln (Ressourcen)
+Jeder Spieler würfelt 2W6. Das Ergebnis bestimmt welche Regionen dieser Runde produzieren (wie bei Catan). Wer Gebäude auf produzierenden Feldern hat, erhält Ressourcen entsprechend seiner Bauwerke.
+Phase 2 · Karten ziehen
+Jeder Spieler zieht 1 Karte vom gemeinsamen Stapel und 1 Fraktionskarte. Karten erlauben Sofortaktionen, dauerhafte Boni oder können als Reaktion auf Weltereignisse gespielt werden.
+Phase 3 · Aktionen (gleichzeitig geplant, reihum ausgeführt)
+Jeder Spieler hat 3 Aktionspunkte pro Runde: Bauen · Bewegen · Handeln · Forschen · Sabotieren · Aether anzapfen. Aktionen werden verdeckt geplant und gleichzeitig aufgedeckt — das verhindert endlose Wartezeiten.
+Phase 4 · Weltereignis (App-Phase)
+Ein Spieler fotografiert das Feld oder beschreibt was diese Runde passiert ist, und gibt es in die Companion-App ein. Die KI-Weltmaschine (Ollama) analysiert und generiert ein Weltereignis mit direkten Spieleffekten, die sofort umgesetzt werden.
+Phase 5 · Siegpunkte notieren
+Offene Punkte (Gebiete, Städte, Routen) werden auf dem gemeinsamen Zähltrack aktualisiert. Geheimziel-Punkte bleiben verdeckt bis Spielende.
+✦   ✦   ✦
+Das Spiel endet, wenn die vereinbarte Rundenanzahl erreicht ist — oder wenn die Weltlage auf Stufe 6 (Chaotisch) fällt und eine Katastrophen-Karte „Weltuntergang" gezogen wird. Dann verlieren alle Spieler die Hälfte ihrer Punkte. Wer trotzdem die meisten hat, gewinnt — in Trümmern.
+AETHORIA · Das Erbe der zerstörten Welt
+Spielwelt-Entwurf · Companion App · WorldEngine KI-System`;
+
+const RULES_TEXT = `Inhaltsverzeichnis
+1. Die Geschichte von Aethoria
+Vor dreihundert Jahren zerbrach das Aethorische Reich in einer einzigen Nacht. Die Magier des Turms von Kaelthas rissen in ihrem Hunger nach ewiger Energie ein Loch in das Gewebe der Welt. Flüsse begannen rückwärts zu fließen. Wälder brannten ohne Feuer. Städte versanken in Erde, die wie Wasser wurde.
+Was blieb, waren ein Kontinent in Scherben — und die Aetherwunden: glühende Risse im Boden, aus denen rohe Energie sickert, fruchtbar und tödlich zugleich. Drei Jahrhunderte später erheben sich wieder Fraktionen aus dem Staub, jede mit ihrer eigenen Vision der Zukunft.
+2. Spielziel
+Aethoria ist ein Aufbau- und Strategiespiel. Jeder Spieler führt eine Fraktion und versucht, am Ende der vereinbarten Rundenzahl die meisten Siegpunkte zu sammeln.
+Siegpunkte werden durch drei Wege verdient:
+Aufbauen: Städte, Festungen und Einheiten errichten
+Kontrollieren: Gebiete, Aetherwunden und Handelsrouten halten
+Geheimziel erfüllen: jede Fraktion hat ein verdecktes Langzeitziel
+3. Spielmaterial
+3.1 Spielfeld
+Das Spielfeld besteht aus 63 sechseckigen Hex-Kacheln, die modular zusammengesteckt werden. Die Kacheln zeigen sieben verschiedene Regionstypen:
+12 Waldkacheln (Ressource: Holz, Kräuter)
+10 Gebirgskacheln (Ressource: Erz, Stein)
+14 Ebenenkacheln (Ressource: Nahrung, Bevölkerung)
+8 Küstenkacheln (Ressource: Fisch, Salz, Handel)
+6 Vulkan-/Aschekacheln (Ressource: Obsidian, Schwefel)
+4 Aetherwunden-Kacheln (Ressource: Aether-Kristalle)
+5 Ruinenkacheln (Ressource: Artefakte, Stein)
+4 Flusskacheln (Transport oder Barriere)
+3.2 Fraktions-Spielsteine (je Fraktion)
+4 Siedlungen (Stufe-1-Gebäude)
+3 Städte (Stufe-2-Gebäude)
+2 Festungen (Stufe-3-Gebäude)
+6 Krieger-Token
+30 Siegpunkt-Marker (1 SP / 3 SP / 5 SP)
+3.3 Gemeinsames Material
+1 Weltlage-Track (6 Stufen: Blühend bis Chaotisch)
+1 Weltlage-Marker
+60 Ereigniskarten (Weltereignis-Stapel)
+36 Fraktionskarten (6 pro Fraktion)
+6 Geheimziel-Karten (verdeckt, 1 pro Fraktion)
+2 normale Sechsseitige Würfel (2W6)
+2 achtsseitige Würfel (2W8, für Kampf)
+1 Rundenmarker
+4. Spielvorbereitung
+4.1 Spielfeld aufbauen
+Legt die Hex-Kacheln nach der empfohlenen Karte aus (oder zufällig für mehr Abwechslung). Steckt die Verbindungsstifte ein.
+Platziert den Weltlage-Marker auf Stufe 2 (Stabil).
+Legt den Rundenmarker auf Runde 1.
+4.2 Fraktionen wählen
+Jeder Spieler wählt eine Fraktion. Bei 2 Spielern werden thematisch gegensätzliche Fraktionen empfohlen (z.B. Eisengilde vs. Tidenrat). Kein Spieler darf dieselbe Fraktion wählen.
+4.3 Startaufstellung
+Jeder Spieler nimmt seine Spielsteine in der Fraktionsfarbe.
+Jeder Spieler platziert 1 Siedlung auf seinem Startgebiet (siehe Fraktionstabelle).
+Jeder Spieler zieht 1 verdeckte Geheimziel-Karte und schaut sie heimlich an.
+Jeder Spieler erhält die Startressourcen seiner Fraktion (2 Holz, 2 Stein, 1 Nahrung).
+Der jüngste Spieler beginnt. Dann im Uhrzeigersinn.
+5. Rundenablauf
+Jede Runde besteht aus fünf Phasen, die in dieser Reihenfolge abgehandelt werden:
+Phase 1: Ressourcen würfeln
+Der aktive Spieler würfelt 2W6. Die Summe bestimmt, welche Regionen diese Runde produzieren. Jede Kachel hat eine Zahl (2–12) aufgedruckt. Alle Spieler die auf einer produzierenden Kachel ein Gebäude stehen haben, erhalten Ressourcen:
+Siedlung: 1 Ressource der Kachel
+Stadt: 2 Ressourcen der Kachel
+Festung: 1 Ressource + 1 Verteidigungsbonus
+Phase 2: Karten ziehen
+Jeder Spieler zieht 1 Karte vom gemeinsamen Stapel und 1 Fraktionskarte. Maximal 7 Handkarten. Überschuss muss sofort abgelegt werden.
+Phase 3: Aktionen ausführen
+Jeder Spieler hat 3 Aktionspunkte pro Runde. Aktionen werden gleichzeitig auf Papier geplant (verdeckt), dann reihum aufgedeckt und ausgeführt. Mögliche Aktionen (je 1 AP):
+BAUEN: 1 Gebäude oder Einheit errichten (Kosten: Ressourcen gemäß Tabelle)
+BEWEGEN: 1 Einheit bewegt sich bis zu 2 Felder (3 im Wald für Wildklinge)
+HANDELN: Ressourcentausch mit einem benachbarten Spieler oder Hafen
+FORSCHEN: 1 zusätzliche Karte ziehen
+ANGREIFEN: Feindliche Einheit oder Gebäude angreifen (W8-Wurf)
+AETHER ANZAPFEN: Aetherwunde nutzen (Nebelwacht: kostenlos; andere: 2 AP)
+Bauen — Kosten
+Siedlung: 1 Holz + 1 Stein
+Stadt (aus Siedlung): 2 Stein + 1 Erz + 1 Nahrung
+Festung (aus Stadt): 3 Stein + 2 Erz
+Krieger: 1 Nahrung + 1 Erz
+Kampf
+Angreifer und Verteidiger würfeln je 1W8. Boni werden addiert:
+Krieger auf Festungs-Feld: +3
+Eigenes Gebiet: +1
+Gebirgskachel (Verteidiger): +2
+Wildklinge im Wald: +2
+Das höhere Ergebnis gewinnt. Bei Gleichstand gewinnt der Verteidiger. Der Verlierer verliert 1 Einheit oder 1 Gebäudestufe.
+Phase 4: Weltereignis — Companion App
+Dies ist das Herzstück von AETHORIA. Ein Spieler (reihum wechselnd) fotografiert das aktuelle Spielfeld oder beschreibt in der App, was diese Runde passiert ist. Die KI-Weltmaschine analysiert:
+Welche Regionen wurden stark besiedelt?
+Wo wurde gekämpft oder gerodet?
+Wie steht die Weltlage aktuell?
+Die App antwortet mit einem Weltereignis und konkreten Spieleffekten. Alle Spieler müssen die Effekte sofort umsetzen.
+Weltlage-Skala
+Die Weltlage wird durch Spielerhandlungen und Weltereignisse beeinflusst:
+Stufe 1 — Blühend: Alle Ressourcen +1 pro Runde
+Stufe 2 — Stabil: Normaler Spielzustand
+Stufe 3 — Angespannt: Handelsrouten -1 Effizienz
+Stufe 4 — Unruhig: Bevölkerungswachstum gestoppt
+Stufe 5 — Krisenhaft: Alle Weltereignis-Effekte doppelt stark
+Stufe 6 — Chaotisch: Katastrophen-Karte möglich — alle verlieren 50% ihrer Punkte
+Phase 5: Siegpunkte notieren
+Nach dem Weltereignis werden alle offenen Siegpunkte auf dem gemeinsamen Zähltrack aktualisiert. Geheimziel-Punkte bleiben verdeckt bis zum Spielende.
+6. Siegpunkte & Spielende
+6.1 Siegpunkt-Übersicht
+6.2 Spielende
+Das Spiel endet in einem der folgenden Fälle:
+Die vereinbarte Rundenzahl ist erreicht (Standard: 10 Runden)
+Ein Spieler hat 30 Siegpunkte (Sofort-Sieg — optionale Regel)
+Die Weltlage erreicht Stufe 6 und eine Katastrophen-Karte wird gezogen
+Dann werden alle Geheimziel-Karten aufgedeckt und die Geheimziel-Punkte vergeben. Wer die meisten Siegpunkte hat, gewinnt!
+7. Szenarien
+7.1 Duell — 2 Spieler
+Empfohlene Fraktionen: Eisengilde vs. Tidenrat (oder Wildklinge vs. Sonnenbund). Beide Spieler starten auf gegenüberliegenden Kontinenthälften. Die Zentralebene ist erst ab Runde 4 begehbar.
+Geheimziele sind aggressiver (z.B. Zerstöre 2 gegnerische Städte)
+Weltmaschine reagiert stärker, da weniger Kompensation möglich
+Empfohlene Rundenzahl: 8
+7.2 Dreieck — 3 Spieler
+Drei Fraktionen, drei Ecken. Allianzen sind erlaubt, enden aber automatisch nach 2 Runden. Die Weltmaschine bevorzugt Ereignisse die den Führenden schwächen.
+Empfohlene Rundenzahl: 9
+7.3 Das neue Erbe — 4 Spieler (Standardszenario)
+Das Hauptszenario. Alle vier Quartanten des Spielfelds sind gleich groß. Ressourcenverteilung ausgewogen. Weltmaschine läuft auf normaler Intensität.
+Grauasche kann optional gespielt werden für erhöhte Drama-Dynamik
+Empfohlene Rundenzahl: 10
+7.4 Aethorias letzter Tag — 5-6 Spieler
+Alle sechs Fraktionen. Die Grauasche hat ein öffentliches Ziel: Den Kaelthas-Turm in Runde 12 zu aktivieren. Gelingt es, verlieren alle anderen — außer jene die ein Bündnis mit der Grauasche geschlossen haben.
+Ständige Spannung: Grauasche aufhalten oder selbst Punkte sammeln?
+Weltmaschine eskaliert ab Runde 8 automatisch um eine Weltlage-Stufe
+Empfohlene Rundenzahl: 15
+8. Companion App — Weltmaschine
+8.1 Was die App macht
+Die AETHORIA Companion App läuft lokal auf einem Tablet oder Laptop und verbindet sich mit Ollama (lokale KI). Sie übernimmt die Rolle der Weltmaschine: Sie reagiert auf das Spielgeschehen und generiert dynamische Weltereignisse.
+8.2 Einrichtung (einmalig)
+Ollama installieren: ollama.ai (kostenlos, läuft lokal)
+Modell laden: "ollama pull llava" im Terminal
+Ollama starten: "ollama serve"
+Companion App im Browser öffnen
+URL eingeben (Standard: http://localhost:11434) und "Verbinden" klicken
+8.3 Nutzung während des Spiels
+Nach Phase 3 ein Foto vom Spielfeld aufnehmen (oder Beschreibung eingeben)
+Optional: Ereignis-Schwerpunkt wählen (Wirtschaft, Wetter, Unfall…)
+Auf "Die Welt reagiert" tippen
+KI-Antwort vorlesen — alle Spieler setzen die Effekte um
+Weltlage-Marker entsprechend anpassen
+9. Schnellreferenz
+Aktionen (je 1 AP)
+Bauen — Siedlung/Stadt/Festung/Einheit errichten
+Bewegen — Einheit bis zu 2 Felder (Wildklinge im Wald: 3)
+Handeln — Ressourcentausch mit Nachbar/Hafen
+Forschen — 1 zusätzliche Karte ziehen
+Angreifen — W8-Duell gegen Gegner
+Aether anzapfen — Aetherwunde nutzen
+Kampf-Boni
+Festungs-Feld: +3 | Eigenes Gebiet: +1
+Gebirge (Verteidiger): +2 | Wildklinge im Wald: +2
+Bei Gleichstand gewinnt der Verteidiger.
+Weltlage — Kurzübersicht
+1 Blühend: +1 Ressource/Runde | 2 Stabil: Normal
+3 Angespannt: Handel -1 | 4 Unruhig: Wachstum stop
+5 Krisenhaft: Ereignisse ×2 | 6 Chaotisch: Katastrophe möglich`;
+
+// Vollständiger Kontext für Ollama-Prompt
+function getFullContext() {
+  return `
+=== SPIELWELT AETHORIA (Lore) ===
+${LORE_TEXT}
+
+=== SPIELREGELN (Kurzfassung) ===
+${RULES_TEXT}
+`;
+}
+
+
+// ══════════════════════════════
+//  INFO DRAWER
+// ══════════════════════════════
+const INFO_SECTIONS = {
+  lore: `AETHORIA — Die Spielwelt
+
+Vor dreihundert Jahren zerbrach das Aethorische Reich. Die Magier des Turms von Kaelthas rissen ein Loch in das Gewebe der Welt. Flüsse begannen rückwärts zu fließen. Städte versanken in Erde, die wie Wasser wurde.
+
+Was blieb: ein Kontinent in Scherben und die AETHERWUNDEN — glühende Risse im Boden, aus denen rohe Energie sickert.
+
+DIE SIEBEN REGIONEN:
+🌲 Waldgürtel    — Holz, Kräuter | Gefahr: Wildfeuer
+⛰ Eisengebirge  — Erz, Stein   | Gefahr: Erdrutsch
+🌌 Aetherwunden  — Kristalle +3 SP | Gefahr: Mutation
+🌊 Tiefseeküste  — Fisch, Handel | Gefahr: Sturmseen
+🏛 Zentralebene  — Artefakte ×2 SP | Gefahr: Instabilität
+🌋 Aschefelder   — Obsidian     | Gefahr: Vulkanausbruch
+🌾 Südebenen     — Nahrung +1 Bev. | Gefahr: Dürre
+
+WELTLAGE-SKALA:
+1 Blühend → 2 Stabil → 3 Angespannt → 4 Unruhig → 5 Krisenhaft → 6 Chaotisch`,
+
+  rules: `RUNDENABLAUF (5 Phasen):
+
+Phase 1 — RESSOURCEN WÜRFELN
+2W6 bestimmt welche Regionen produzieren.
+Siedlung=1 Ressource | Stadt=2 | Festung=1+Verteidigung
+
+Phase 2 — KARTEN ZIEHEN
+1 Stapelkarte + 1 Fraktionskarte. Max 7 Handkarten.
+
+Phase 3 — AKTIONEN (3 AP, gleichzeitig geplant)
+• Bauen    — Siedlung (1H+1S) / Stadt (2S+1E+1N) / Festung (3S+2E)
+• Bewegen  — 2 Felder (Wildklinge im Wald: 3)
+• Handeln  — Ressourcentausch mit Nachbar/Hafen
+• Forschen — 1 Karte ziehen
+• Angreifen — W8-Duell (Gleichstand = Verteidiger gewinnt)
+• Aether    — Wunde anzapfen (Nebelwacht gratis, andere 2 AP)
+
+Phase 4 — WELTEREIGNIS (diese App)
+Foto oder Text → KI reagiert mit Ereignis + Effekten
+
+Phase 5 — SIEGPUNKTE notieren
+
+KAMPF-BONI:
+Festung +3 | Eigenes Gebiet +1 | Gebirge (Verteidiger) +2 | Wildklinge Wald +2`,
+
+  factions: `DIE SECHS FRAKTIONEN:
+
+⚒ EISENGILDE — Bauen +2, Natur -1
+Start: Eisengebirge | Stärke: Festungen & Produktion
+Schwäche: Abhängig von Rohstoffen, Naturereignisse treffen hart
+
+🌊 TIDENRAT — Handel +3, Kampf -1
+Start: Tiefseeküste | Stärke: Handelsrouten & Diplomatie
+Schwäche: Sturm/Seuche kann alle Routen zerstören
+
+🌫 NEBELWACHT — Aether +3, Bauen -1
+Start: Aetherwunde Ost | Stärke: Magie & Spionage
+Schwäche: Aether-Nutzung riskiert Sturm
+
+☀ SONNENBUND — Bevölkerung +3, Kampf -2
+Start: Südebenen | Stärke: Bevölkerung & Nahrung
+Schwäche: Dürre/Seuche trifft katastrophal
+
+🐺 WILDKLINGE — Angriff +3, Gebäude -3
+Start: Waldgürtel | Stärke: Mobilität, Wald ×2
+Schwäche: Keine Städte — nur Lager möglich
+
+💀 GRAUASCHE — Vulkan +3, Handel -3
+Start: Aschefelder | Geheimziel: Kaelthas-Turm reaktivieren
+Schwäche: Keine Handelsallianzen möglich`,
+
+  scoring: `SIEGPUNKTE-ÜBERSICHT:
+
++2 SP  Stadt gebaut
++1 SP  Festung gebaut (max. 4)
++1 SP  Gebiet kontrolliert (pro Rundenende)
+×2     Zentralebene — alle dortigen SP verdoppelt
++3 SP  Aetherwunde vollständig kontrolliert
++1 SP  Handelsabkommen aktiv (pro Route)
++1 SP  Pro 3 Bevölkerungseinheiten
+0-3 SP Ereigniskarte gespielt
+0-8 SP Geheimziel erfüllt (aufgedeckt am Ende)
+-3 SP  Weltkatastrophe verursacht
+
+GEHEIMZIEL-BEISPIELE:
++6 SP  Herr der Ströme — alle 4 Flusskacheln kontrollieren
++5 SP  Der Pazifist — null Krieger am Spielende
++7 SP  Erbe des Alten Reichs — Zentralebene ab Runde 6 halten
++4 SP  Die Stille Hand — Abkommen mit allen Fraktionen
++8 SP  Hüter des Gleichgewichts — Weltlage bei 1 oder 2 halten
++5 SP  Steinerne Festung — alle 4 Festungen bauen & halten
+
+SPIELENDE: Nach X Runden ODER Weltlage=6 + Katastrophenkarte`,
+};
+
+function toggleDrawer() {
+  const d = document.getElementById('infoDrawer');
+  d.classList.toggle('open');
+  if (d.classList.contains('open') && document.getElementById('infoContent').textContent === 'Lade…') {
+    document.getElementById('infoContent').textContent = INFO_SECTIONS.lore;
+  }
+}
+
+function switchInfo(key, btn) {
+  document.querySelectorAll('.itab2').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('infoContent').textContent = INFO_SECTIONS[key];
+}
+
 </script>
 </body>
 </html>

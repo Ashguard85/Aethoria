@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AETHORIA — Weltmaschine</title>
+<link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════
+   AETHORIA COMPANION — WELTMASCHINE
+   Aesthetic: Living parchment meets arcane runes
+   Dark fantasy, warm candlelight, aged leather
+═══════════════════════════════════════════ */
+:root {
+  --ink:         #120e08;
+  --ink2:        #1e1810;
+  --ink3:        #2a2218;
+  --vellum:      #f2e8cc;
+  --vellum2:     #e0d0a8;
+  --vellum3:     #c4ae80;
+  --vellum4:     #a08860;
+  --ember:       #c4611a;
+  --ember2:      #e8821e;
+  --ember3:      #f5a848;
+  --gold:        #9a7018;
+  --gold2:       #c89030;
+  --gold3:       #e8b840;
+  --teal:        #1a5858;
+  --teal2:       #2a8878;
+  --violet:      #3a1858;
+  --violet2:     #6a3898;
+  --moss:        #2a4818;
+  --moss2:       #4a7828;
+  --blood:       #6a1010;
+  --blood2:      #a82020;
+  --storm:       #3a5060;
+  --storm2:      #6a8898;
+  --glow-gold:   rgba(200,144,48,0.15);
+  --glow-ember:  rgba(196,97,26,0.2);
+
+  /* Fraktionsfarben */
+  --f-eisengilde: #c45a2a;
+  --f-tidenrat:   #2a8878;
+  --f-nebelwacht: #6a3898;
+  --f-sonnenbund: #c89030;
+  --f-wildklinge: #4a7828;
+  --f-grauasche:  #a82020;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+
+body {
+  background: var(--ink);
+  color: var(--vellum);
+  font-family: 'IM Fell English', Georgia, serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── ANIMATED BACKGROUND ── */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(156,112,24,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 90%, rgba(106,16,16,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 50% 50%, rgba(58,24,88,0.04) 0%, transparent 70%);
+  pointer-events:none;
+  animation: ambiance 12s ease-in-out infinite alternate;
+}
+@keyframes ambiance {
+  0%   { opacity:0.6; }
+  50%  { opacity:1; }
+  100% { opacity:0.7; }
+}
+
+/* Grain texture */
+body::after {
+  content:'';
+  position:fixed; inset:0; z-index:0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+  pointer-events:none;
+}
+
+/* ── APP SHELL ── */
+.app {
+  position:relative; z-index:1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1rem 5rem;
+}
+
+/* ═══ HEADER ═══ */
+.site-header {
+  padding: 1.5rem 0 1rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(200,144,48,0.2);
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+.site-header::after {
+  content: '✦  ✦  ✦';
+  position:absolute; bottom:-0.75rem; left:50%;
+  transform:translateX(-50%);
+  background:var(--ink); padding:0 1rem;
+  font-size:0.6rem; letter-spacing:0.6rem;
+  color: var(--gold2);
+}
+.logo {
+  font-family:'Uncial Antiqua', serif;
+  font-size: clamp(1.8rem, 6vw, 3rem);
+  color: var(--gold3);
+  text-shadow: 0 0 30px rgba(232,184,64,0.25), 0 2px 6px rgba(0,0,0,0.8);
+  letter-spacing:0.08em;
+  line-height:1;
+}
+.logo-sub {
+  font-family:'IM Fell English SC', serif;
+  font-size:0.72rem;
+  letter-spacing:0.35em;
+  color:var(--vellum4);
+  margin-top:0.3rem;
+}
+
+/* ═══ OLLAMA PANEL ═══ */
+.ollama-bar {
+  background: rgba(18,14,8,0.8);
+  border:1px solid rgba(200,144,48,0.2);
+  border-radius:4px;
+  padding:0.75rem 1rem;
+  margin-bottom:1.25rem;
+  display:flex; align-items:center; gap:0.75rem;
+  flex-wrap:wrap;
+}
+.status-orb {
+  width:10px; height:10px; border-radius:50%;
+  background:#333; flex-shrink:0;
+  transition: all 0.4s;
+  box-shadow: 0 0 6px #333;
+}
+.status-orb.on  { background:#4caf50; box-shadow:0 0 8px #4caf50; }
+.status-orb.err { background:var(--blood2); box-shadow:0 0 8px var(--blood2); }
+.status-orb.spin { background:var(--gold2); box-shadow:0 0 8px var(--gold2); animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.35} }
+
+.ollama-status {
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.72rem; color:var(--vellum4); flex:1;
+}
+.ollama-fields {
+  display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;
+}
+.ollama-fields label { font-size:0.72rem; color:var(--storm2); }
+.ollama-fields input {
+  background:rgba(242,232,204,0.06);
+  border:1px solid rgba(200,144,48,0.25);
+  color:var(--vellum); padding:0.25rem 0.5rem;
+  border-radius:3px; font-family:'JetBrains Mono',monospace;
+  font-size:0.7rem; width:150px;
+}
+.ollama-fields input:focus { outline:none; border-color:var(--gold2); }
+.btn-connect {
+  background:rgba(200,144,48,0.12);
+  border:1px solid var(--gold2);
+  color:var(--gold3); padding:0.25rem 0.85rem;
+  border-radius:3px; cursor:pointer;
+  font-family:'IM Fell English',serif; font-size:0.82rem;
+  transition:all 0.2s; white-space:nowrap;
+}
+.btn-connect:hover { background:rgba(200,144,48,0.25); }
+
+/* ═══ GAME STATE BAR ═══ */
+.state-bar {
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px,1fr));
+  gap:0.6rem; margin-bottom:1.25rem;
+}
+.state-card {
+  background:rgba(18,14,8,0.7);
+  border:1px solid rgba(200,144,48,0.18);
+  border-radius:4px; padding:0.6rem 0.75rem;
+  text-align:center;
+}
+.state-label {
+  font-family:'IM Fell English SC',serif;
+  font-size:0.6rem; letter-spacing:0.2em;
+  color:var(--storm2); margin-bottom:0.2rem;
+  text-transform:uppercase;
+}
+.state-val {
+  font-family:'Uncial Antiqua',serif;
+  font-size:1.2rem; color:var(--gold3);
+  line-height:1;
+}
+.state-val.sm {
+  font-family:'IM Fell English',serif;
+  font-size:0.88rem; font-style:italic;
+}
+
+/* Weltlage färbt sich */
+.mood-0 { color:#4caf50 !important; }
+.mood-1 { color:var(--gold3) !important; }
+.mood-2 { color:var(--ember2) !important; }
+.mood-3 { color:var(--ember) !important; }
+.mood-4 { color:var(--blood2) !important; }
+.mood-5 { color:#ff4444 !important; animation:flicker 1.5s infinite; }
+@keyframes flicker { 0%,100%{opacity:1}50%{opacity:0.6} }
+
+/* ═══ SECTION TITLES ═══ */
+.sec-title {
+  font-family:'IM Fell English SC',serif;
+  font-size:0.75rem; letter-spacing:0.25em;
+  color:var(--gold2); margin-bottom:0.75rem;
+  display:flex; align-items:center; gap:0.75rem;
+}
+.sec-title::after {
+  content:''; flex:1; height:1px;
+  background:linear-gradient(to right, rgba(200,144,48,0.35), transparent);
+}
+
+/* ═══ PLAYERS GRID ═══ */
+.players-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(130px,1fr));
+  gap:0.6rem; margin-bottom:1.25rem;
+}
+.player-card {
+  border:1px solid rgba(200,144,48,0.15);
+  border-radius:4px; padding:0.65rem 0.8rem;
+  cursor:pointer; transition:all 0.2s;
+  position:relative; overflow:hidden;
+  background:rgba(18,14,8,0.6);
+}
+.player-card::before {
+  content:''; position:absolute; inset:0;
+  opacity:0.08; transition:opacity 0.2s;
+}
+.player-card:hover { border-color:rgba(200,144,48,0.45); }
+.player-card:hover::before { opacity:0.14; }
+.player-card.active {
+  border-color:var(--gold2);
+  box-shadow: 0 0 16px rgba(200,144,48,0.15);
+}
+.player-card.active::after {
+  content:'▶'; position:absolute; top:0.4rem; right:0.5rem;
+  color:var(--gold2); font-size:0.55rem;
+}
+.p-name {
+  font-family:'IM Fell English SC',serif;
+  font-size:0.9rem; color:var(--vellum);
+  margin-bottom:0.15rem;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.p-faction {
+  font-size:0.7rem; font-style:italic;
+  opacity:0.7; margin-bottom:0.3rem;
+}
+.p-pts {
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.75rem; color:var(--gold2);
+}
+.p-pts span { font-size:1rem; }
+/* SP +/- buttons */
+.p-pts-row {
+  display:flex; align-items:center; gap:0.3rem; margin-top:0.3rem;
+}
+.pt-btn {
+  background:rgba(200,144,48,0.1);
+  border:1px solid rgba(200,144,48,0.25);
+  color:var(--gold2); width:18px; height:18px;
+  border-radius:2px; cursor:pointer; font-size:0.75rem;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.15s;
+}
+.pt-btn:hover { background:rgba(200,144,48,0.3); }
+
+/* Fraktion-Farbpunkte */
+.f-dot {
+  display:inline-block;
+  width:8px; height:8px; border-radius:50%;
+  margin-right:4px; vertical-align:middle;
+}
+
+/* ═══ SETUP PANEL ═══ */
+.setup-panel {
+  background:rgba(18,14,8,0.85);
+  border:1px solid rgba(200,144,48,0.3);
+  border-radius:6px; padding:1.5rem;
+  margin-bottom:1.5rem;
+  animation:fadeIn 0.4s ease;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+
+.setup-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(200px,1fr));
+  gap:1rem; margin-bottom:1.25rem;
+}
+.setup-field label {
+  display:block; font-family:'IM Fell English SC',serif;
+  font-size:0.65rem; letter-spacing:0.2em;
+  color:var(--storm2); margin-bottom:0.3rem;
+}
+.setup-field input, .setup-field select {
+  width:100%;
+  background:rgba(242,232,204,0.06);
+  border:1px solid rgba(200,144,48,0.22);
+  color:var(--vellum); padding:0.45rem 0.7rem;
+  border-radius:3px; font-family:'IM Fell English',serif;
+  font-size:0.95rem;
+}
+.setup-field input:focus, .setup-field select:focus {
+  outline:none; border-color:var(--gold2);
+}
+.setup-field select option { background:#1e1810; }
+
+.players-setup {
+  display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;
+  margin-bottom:1.25rem;
+}
+.psetup-row {
+  display:flex; gap:0.4rem; align-items:center;
+}
+.psetup-num {
+  font-family:'Uncial Antiqua',serif; font-size:0.85rem;
+  color:var(--gold2); width:18px; text-align:center;
+}
+.psetup-row input, .psetup-row select {
+  flex:1;
+  background:rgba(242,232,204,0.05);
+  border:1px solid rgba(200,144,48,0.18);
+  color:var(--vellum); padding:0.3rem 0.5rem;
+  border-radius:3px; font-family:'IM Fell English',serif;
+  font-size:0.85rem;
+}
+.psetup-row input:focus, .psetup-row select:focus {
+  outline:none; border-color:var(--gold2);
+}
+.psetup-row select option { background:#1e1810; }
+
+.btn-start {
+  width:100%;
+  background:linear-gradient(135deg, rgba(196,97,26,0.7), rgba(106,16,16,0.7));
+  border:1px solid var(--ember);
+  color:var(--vellum); padding:0.75rem;
+  border-radius:4px; cursor:pointer;
+  font-family:'Uncial Antiqua',serif; font-size:0.95rem;
+  letter-spacing:0.1em; transition:all 0.2s;
+}
+.btn-start:hover {
+  background:linear-gradient(135deg, rgba(196,97,26,1), rgba(106,16,16,1));
+  box-shadow:0 0 24px rgba(196,97,26,0.35);
+}
+
+/* ═══ INPUT SECTION ═══ */
+.input-section {
+  background:rgba(18,14,8,0.7);
+  border:1px solid rgba(200,144,48,0.2);
+  border-radius:6px; padding:1.1rem;
+  margin-bottom:1.25rem;
+}
+.input-tabs {
+  display:flex; gap:0.4rem; margin-bottom:0.9rem;
+}
+.itab {
+  background:transparent;
+  border:1px solid rgba(200,144,48,0.2);
+  color:var(--storm2); padding:0.35rem 0.9rem;
+  border-radius:3px; cursor:pointer;
+  font-family:'IM Fell English',serif; font-size:0.85rem;
+  transition:all 0.2s;
+}
+.itab.active {
+  background:rgba(200,144,48,0.15);
+  border-color:var(--gold2); color:var(--gold3);
+}
+
+.tab-pane { display:none; }
+.tab-pane.active { display:block; }
+
+.field-label {
+  font-family:'IM Fell English SC',serif;
+  font-size:0.65rem; letter-spacing:0.2em;
+  color:var(--storm2); margin-bottom:0.35rem;
+  display:block;
+}
+
+textarea {
+  width:100%;
+  background:rgba(242,232,204,0.04);
+  border:1px solid rgba(200,144,48,0.18);
+  color:var(--vellum); padding:0.7rem;
+  border-radius:4px; font-family:'IM Fell English',serif;
+  font-size:0.95rem; line-height:1.55;
+  resize:vertical; min-height:80px;
+  transition:border-color 0.2s;
+}
+textarea:focus { outline:none; border-color:var(--gold2); }
+textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
+
+.img-dropzone {
+  border:2px dashed rgba(200,144,48,0.25);
+  border-radius:4px; padding:1.75rem;
+  text-align:center; cursor:pointer;
+  transition:all 0.2s; position:relative;
+}
+.img-dropzone:hover, .img-dropzone.over {
+  border-color:var(--gold2);
+  background:rgba(200,144,48,0.04);
+}
+.img-dropzone input[type=file] {
+  position:absolute; inset:0; opacity:0; cursor:pointer;
+  width:100%; height:100%;
+}
+.drop-icon { font-size:2.2rem; margin-bottom:0.4rem; }
+.drop-hint { color:var(--vellum4); font-style:italic; font-size:0.88rem; }
+#imgPreview, #imgPreview2 {
+  max-width:100%; max-height:180px;
+  border-radius:4px; margin-top:0.6rem;
+  border:1px solid rgba(200,144,48,0.25);
+  display:none;
+}
+
+.action-row {
+  display:flex; gap:0.6rem; margin-top:0.8rem;
+  align-items:center; flex-wrap:wrap;
+}
+.event-hint {
+  background:rgba(242,232,204,0.04);
+  border:1px solid rgba(200,144,48,0.18);
+  color:var(--vellum); padding:0.38rem 0.6rem;
+  border-radius:3px; font-family:'IM Fell English',serif;
+  font-size:0.85rem; flex:1; min-width:140px;
+}
+.event-hint option { background:#1e1810; }
+
+.btn-round {
+  background:rgba(74,120,40,0.2);
+  border:1px solid var(--moss2);
+  color:#8bc87a; padding:0.4rem 1rem;
+  border-radius:3px; cursor:pointer;
+  font-family:'IM Fell English',serif; font-size:0.82rem;
+  transition:all 0.2s;
+}
+.btn-round:hover { background:rgba(74,120,40,0.4); }
+
+.btn-world {
+  background:linear-gradient(135deg, rgba(196,97,26,0.75), rgba(106,16,16,0.75));
+  border:1px solid var(--ember);
+  color:var(--vellum); padding:0.4rem 1.2rem;
+  border-radius:3px; cursor:pointer;
+  font-family:'Uncial Antiqua',serif; font-size:0.75rem;
+  letter-spacing:0.1em; transition:all 0.2s; white-space:nowrap;
+}
+.btn-world:hover:not(:disabled) {
+  background:linear-gradient(135deg, rgba(196,97,26,1), rgba(106,16,16,1));
+  box-shadow:0 0 20px rgba(196,97,26,0.4);
+}
+.btn-world:disabled { opacity:0.35; cursor:not-allowed; }
+
+.err-box {
+  background:rgba(106,16,16,0.2);
+  border:1px solid rgba(168,32,32,0.4);
+  border-radius:3px; padding:0.6rem 0.9rem;
+  font-size:0.82rem; color:#e88; margin-bottom:0.75rem;
+  display:none;
+}
+
+/* ═══ WORLD FEED ═══ */
+.world-feed {
+  display:flex; flex-direction:column; gap:0.9rem;
+}
+
+.event-card {
+  background:rgba(18,14,8,0.75);
+  border-left:3px solid var(--storm);
+  border-radius:0 5px 5px 0;
+  padding:1rem 1.2rem;
+  animation:slideIn 0.45s cubic-bezier(0.16,1,0.3,1);
+  position:relative;
+}
+@keyframes slideIn {
+  from{opacity:0;transform:translateX(-14px)}
+  to{opacity:1;transform:translateX(0)}
+}
+.event-card.economy  { border-left-color:var(--gold2); }
+.event-card.weather  { border-left-color:var(--storm2); }
+.event-card.accident { border-left-color:var(--blood2); }
+.event-card.politics { border-left-color:var(--moss2); }
+.event-card.nature   { border-left-color:var(--teal2); }
+.event-card.special  { border-left-color:var(--violet2); }
+
+.event-head {
+  display:flex; justify-content:space-between;
+  align-items:center; margin-bottom:0.5rem;
+}
+.event-type-tag {
+  font-family:'IM Fell English SC',serif;
+  font-size:0.6rem; letter-spacing:0.2em;
+  padding:0.12rem 0.5rem; border-radius:2px;
+  background:rgba(242,232,204,0.07); color:var(--vellum3);
+}
+.event-meta {
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.65rem; color:var(--storm2);
+}
+.event-body {
+  font-size:1rem; line-height:1.65; color:var(--vellum);
+  margin-bottom:0.6rem;
+}
+.event-effects {
+  display:flex; flex-wrap:wrap; gap:0.35rem;
+}
+.effect-chip {
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.65rem; padding:0.1rem 0.5rem;
+  border-radius:99px; border:1px solid rgba(242,232,204,0.15);
+  color:var(--vellum4);
+}
+
+/* Loading state */
+.event-loading {
+  display:flex; align-items:center; gap:0.75rem;
+  background:rgba(18,14,8,0.6);
+  border-left:3px solid rgba(200,144,48,0.4);
+  border-radius:0 5px 5px 0;
+  padding:0.9rem 1.2rem;
+}
+.rune-spin {
+  width:20px; height:20px;
+  border:2px solid rgba(200,144,48,0.15);
+  border-top-color:var(--gold2);
+  border-radius:50%; flex-shrink:0;
+  animation:spin 0.9s linear infinite;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+.loading-txt {
+  font-style:italic; color:var(--vellum4);
+  font-size:0.88rem;
+}
+.loading-dots::after {
+  content:'';
+  animation:dots 1.5s steps(4,end) infinite;
+}
+@keyframes dots {
+  0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}100%{content:''}
+}
+
+.empty-feed {
+  text-align:center; padding:3rem 1rem;
+  border:1px dashed rgba(200,144,48,0.12);
+  border-radius:4px; color:var(--storm2);
+  font-style:italic;
+}
+.empty-feed .glyph { font-size:2.5rem; margin-bottom:0.75rem; opacity:0.4; }
+
+/* ═══ FACTION COLORS ═══ */
+.eisengilde { --fc: var(--f-eisengilde); }
+.tidenrat   { --fc: var(--f-tidenrat); }
+.nebelwacht { --fc: var(--f-nebelwacht); }
+.sonnenbund { --fc: var(--f-sonnenbund); }
+.wildklinge { --fc: var(--f-wildklinge); }
+.grauasche  { --fc: var(--f-grauasche); }
+
+.player-card::before  { background:var(--fc, var(--gold2)); }
+.player-card .p-faction { color:var(--fc, var(--vellum4)); }
+
+/* ═══ SETTINGS PANEL ═══ */
+.settings-toggle {
+  background:transparent; border:none;
+  color:var(--vellum4); cursor:pointer;
+  font-family:'IM Fell English',serif;
+  font-size:0.8rem; padding:0.2rem 0.5rem;
+  letter-spacing:0.05em; opacity:0.6;
+  transition:opacity 0.2s;
+}
+.settings-toggle:hover { opacity:1; }
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:rgba(18,14,8,0.5); }
+::-webkit-scrollbar-thumb { background:rgba(200,144,48,0.25); border-radius:3px; }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width:500px) {
+  .players-setup { grid-template-columns:1fr; }
+  .psetup-row select { display:none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="site-header">
+    <div class="logo">AETHORIA</div>
+    <div class="logo-sub">Weltmaschine · Companion</div>
+  </header>
+
+  <!-- ═══ OLLAMA ═══ -->
+  <div class="ollama-bar">
+    <div class="status-orb" id="orb"></div>
+    <div class="ollama-status" id="ollamaStatus">Nicht verbunden — Ollama konfigurieren</div>
+    <div class="ollama-fields">
+      <label>URL</label>
+      <input id="ollamaUrl" value="__OLLAMA_URL__" type="text">
+      <label>Modell</label>
+      <input id="ollamaModel" value="__OLLAMA_MODEL__" type="text" style="width:100px">
+      <button class="btn-connect" onclick="connectOllama()">Verbinden</button>
+    </div>
+  </div>
+
+  <!-- ═══ SETUP ═══ -->
+  <div id="setupPanel" class="setup-panel">
+    <div class="sec-title">Neue Partie starten</div>
+
+    <div class="setup-grid">
+      <div class="setup-field">
+        <label>Spielname</label>
+        <input id="gameName" value="Das Erbe der zerstörten Welt" type="text">
+      </div>
+      <div class="setup-field">
+        <label>Anzahl Spieler</label>
+        <select id="playerCount" onchange="buildPlayerRows()">
+          <option value="2">2 Spieler — Duell</option>
+          <option value="3">3 Spieler</option>
+          <option value="4" selected>4 Spieler — Ausgewogen</option>
+          <option value="5">5 Spieler</option>
+          <option value="6">6 Spieler — Episch</option>
+        </select>
+      </div>
+      <div class="setup-field">
+        <label>Runden</label>
+        <select id="totalRounds">
+          <option value="6">6 Runden — Schnell</option>
+          <option value="10" selected>10 Runden — Standard</option>
+          <option value="15">15 Runden — Episch</option>
+          <option value="20">20 Runden — Kampagne</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sec-title">Spieler & Fraktionen</div>
+    <div class="players-setup" id="playerSetupRows"></div>
+
+    <button class="btn-start" onclick="startGame()">⚑ Partie starten</button>
+  </div>
+
+  <!-- ═══ GAME SCREEN (hidden until started) ═══ -->
+  <div id="gameScreen" style="display:none">
+
+    <!-- State Bar -->
+    <div class="state-bar">
+      <div class="state-card">
+        <div class="state-label">Runde</div>
+        <div class="state-val" id="dispRound">1</div>
+      </div>
+      <div class="state-card">
+        <div class="state-label">Von</div>
+        <div class="state-val" id="dispTotal">10</div>
+      </div>
+      <div class="state-card">
+        <div class="state-label">Weltlage</div>
+        <div class="state-val sm" id="dispMood">Stabil</div>
+      </div>
+      <div class="state-card">
+        <div class="state-label">Ereignisse</div>
+        <div class="state-val" id="dispEvents">0</div>
+      </div>
+      <div class="state-card">
+        <div class="state-label">Szenario</div>
+        <div class="state-val sm" id="dispScenario">Standard</div>
+      </div>
+    </div>
+
+    <!-- Players -->
+    <div class="sec-title">Spieler</div>
+    <div class="players-grid" id="playersGrid"></div>
+
+    <!-- Input Section -->
+    <div class="sec-title">Rundenabschluss</div>
+    <div class="input-section">
+      <div id="errBox" class="err-box"></div>
+
+      <div class="input-tabs">
+        <button class="itab active" onclick="switchTab('text',this)">✍ Text</button>
+        <button class="itab" onclick="switchTab('image',this)">📷 Foto</button>
+        <button class="itab" onclick="switchTab('both',this)">✦ Beides</button>
+      </div>
+
+      <!-- Text Tab -->
+      <div class="tab-pane active" id="tab-text">
+        <label class="field-label">Was ist diese Runde passiert?</label>
+        <textarea id="txtInput" rows="4"
+          placeholder="z.B.: Die Eisengilde hat eine Festung im Gebirge fertiggestellt und 3 Krieger aufgestellt. Der Tidenrat schloss einen Handelspakt mit dem Sonnenbund. Die Nebelwacht hat eine Aetherwunde im Osten angezapft…"></textarea>
+      </div>
+
+      <!-- Image Tab -->
+      <div class="tab-pane" id="tab-image">
+        <label class="field-label">Spielfeld fotografieren</label>
+        <div class="img-dropzone" id="drop1">
+          <input type="file" accept="image/*" capture="environment" id="imgFile1" onchange="loadImg(event,'imgPreview','imgData1')">
+          <div class="drop-icon">📸</div>
+          <div class="drop-hint">Foto aufnehmen oder Datei wählen</div>
+          <img id="imgPreview">
+        </div>
+      </div>
+
+      <!-- Both Tab -->
+      <div class="tab-pane" id="tab-both">
+        <label class="field-label">Foto</label>
+        <div class="img-dropzone" id="drop2" style="margin-bottom:0.75rem">
+          <input type="file" accept="image/*" capture="environment" id="imgFile2" onchange="loadImg(event,'imgPreview2','imgData2')">
+          <div class="drop-icon">📸</div>
+          <div class="drop-hint">Foto aufnehmen</div>
+          <img id="imgPreview2">
+        </div>
+        <label class="field-label">Beschreibung</label>
+        <textarea id="txtInput2" rows="2" placeholder="Zusatzinfos zum Foto…"></textarea>
+      </div>
+
+      <div class="action-row">
+        <select class="event-hint" id="eventHint">
+          <option value="">Weltfokus (optional)</option>
+          <option value="economy">💰 Wirtschaft & Handel</option>
+          <option value="weather">🌩 Wetter & Klima</option>
+          <option value="accident">⚠ Unfall & Katastrophe</option>
+          <option value="politics">🏛 Politik & Gesellschaft</option>
+          <option value="nature">🌿 Ökologie & Natur</option>
+          <option value="special">⚡ Aether-Ereignis</option>
+        </select>
+        <button class="btn-round" onclick="nextRound()">Runde weiter →</button>
+        <button class="btn-world" id="btnWorld" onclick="callWorld()">Die Welt reagiert</button>
+      </div>
+    </div>
+
+    <!-- Feed -->
+    <div class="sec-title">Weltgeschehen</div>
+    <div class="world-feed" id="worldFeed">
+      <div class="empty-feed">
+        <div class="glyph">🌍</div>
+        Die Welt wartet auf eure ersten Züge…
+      </div>
+    </div>
+
+  </div><!-- /gameScreen -->
+
+</div><!-- /app -->
+
+<script>
+'use strict';
+
+// ══════════════════════════════
+//  STATE
+// ══════════════════════════════
+const G = {
+  players: [],
+  round: 1,
+  totalRounds: 10,
+  events: [],
+  moodIdx: 1,
+  activePlayer: 0,
+  connected: false,
+  imgData1: null,
+  imgData2: null,
+  gameName: 'Aethoria',
+  scenario: 'Standard',
+};
+
+const MOODS = ['Blühend','Stabil','Angespannt','Unruhig','Krisenhaft','Chaotisch'];
+const MOOD_CLASSES = ['mood-0','mood-1','mood-2','mood-3','mood-4','mood-5'];
+
+const FACTIONS = [
+  { id:'eisengilde', name:'Eisengilde',  icon:'⚒', color:'var(--f-eisengilde)' },
+  { id:'tidenrat',   name:'Tidenrat',    icon:'🌊', color:'var(--f-tidenrat)'   },
+  { id:'nebelwacht', name:'Nebelwacht',  icon:'🌫', color:'var(--f-nebelwacht)' },
+  { id:'sonnenbund', name:'Sonnenbund',  icon:'☀',  color:'var(--f-sonnenbund)' },
+  { id:'wildklinge', name:'Wildklinge',  icon:'🐺', color:'var(--f-wildklinge)' },
+  { id:'grauasche',  name:'Grauasche',   icon:'💀', color:'var(--f-grauasche)'  },
+];
+
+const SCENARIOS = {
+  2: 'Duell — Die letzte Wahl',
+  3: 'Dreieck — Das wacklige Gleichgewicht',
+  4: 'Standard — Das neue Erbe',
+  5: 'Komplex',
+  6: 'Episch — Aethorias letzter Tag',
+};
+
+const TYPE_TAGS = {
+  economy:  '💰 Wirtschaft',
+  weather:  '🌩 Wetter',
+  accident: '⚠ Unfall',
+  politics: '🏛 Politik',
+  nature:   '🌿 Natur',
+  special:  '⚡ Aether',
+};
+
+// ══════════════════════════════
+//  SETUP
+// ══════════════════════════════
+const DEFAULT_NAMES = ['Aldric','Brienna','Corvus','Dahlia','Ezra','Fenna'];
+
+function buildPlayerRows() {
+  const n = +document.getElementById('playerCount').value;
+  const wrap = document.getElementById('playerSetupRows');
+  wrap.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const fOpts = FACTIONS.map((f,fi) =>
+      `<option value="${f.id}" ${fi===i?'selected':''}>${f.icon} ${f.name}</option>`
+    ).join('');
+    wrap.innerHTML += `
+      <div class="psetup-row">
+        <span class="psetup-num">${i+1}</span>
+        <input type="text" id="pname${i}" placeholder="${DEFAULT_NAMES[i]}" value="${DEFAULT_NAMES[i]}">
+        <select id="pfac${i}">${fOpts}</select>
+      </div>`;
+  }
+}
+buildPlayerRows();
+
+function startGame() {
+  const n = +document.getElementById('playerCount').value;
+  G.totalRounds = +document.getElementById('totalRounds').value;
+  G.gameName    = document.getElementById('gameName').value || 'Aethoria';
+  G.scenario    = SCENARIOS[n] || 'Standard';
+  G.round       = 1;
+  G.moodIdx     = 1;
+  G.events      = [];
+  G.activePlayer= 0;
+
+  G.players = [];
+  for (let i = 0; i < n; i++) {
+    const name = document.getElementById(`pname${i}`)?.value.trim() || DEFAULT_NAMES[i];
+    const facId= document.getElementById(`pfac${i}`)?.value || FACTIONS[i].id;
+    const fac  = FACTIONS.find(f=>f.id===facId) || FACTIONS[i];
+    G.players.push({ name, fac, pts:0 });
+  }
+
+  document.getElementById('setupPanel').style.display = 'none';
+  document.getElementById('gameScreen').style.display = 'block';
+  document.getElementById('dispScenario').textContent = n <= 3 ? SCENARIOS[n].split('—')[0].trim() : SCENARIOS[n].split('—')[0].trim();
+  updateHUD();
+  renderPlayers();
+}
+
+// ══════════════════════════════
+//  HUD
+// ══════════════════════════════
+function updateHUD() {
+  document.getElementById('dispRound').textContent  = G.round;
+  document.getElementById('dispTotal').textContent  = G.totalRounds;
+  document.getElementById('dispEvents').textContent = G.events.length;
+  const mEl = document.getElementById('dispMood');
+  mEl.textContent  = MOODS[G.moodIdx];
+  mEl.className    = 'state-val sm ' + MOOD_CLASSES[G.moodIdx];
+}
+
+// ══════════════════════════════
+//  PLAYERS
+// ══════════════════════════════
+function renderPlayers() {
+  const grid = document.getElementById('playersGrid');
+  grid.innerHTML = G.players.map((p,i) => `
+    <div class="player-card ${p.fac.id} ${i===G.activePlayer?'active':''}" onclick="setActive(${i})">
+      <div class="p-name">${p.name}</div>
+      <div class="p-faction"><span class="f-dot" style="background:${p.fac.color}"></span>${p.fac.icon} ${p.fac.name}</div>
+      <div class="p-pts-row">
+        <button class="pt-btn" onclick="event.stopPropagation();adjustPts(${i},-1)">−</button>
+        <div class="p-pts"><span>${p.pts}</span> SP</div>
+        <button class="pt-btn" onclick="event.stopPropagation();adjustPts(${i},+1)">+</button>
+      </div>
+    </div>`).join('');
+}
+
+function setActive(i) {
+  G.activePlayer = i;
+  renderPlayers();
+}
+
+function adjustPts(i, delta) {
+  G.players[i].pts = Math.max(0, G.players[i].pts + delta);
+  renderPlayers();
+}
+
+// ══════════════════════════════
+//  TABS
+// ══════════════════════════════
+function switchTab(id, btn) {
+  document.querySelectorAll('.itab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+// ══════════════════════════════
+//  IMAGES
+// ══════════════════════════════
+function loadImg(evt, previewId, stateKey) {
+  const file = evt.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    G[stateKey] = e.target.result;
+    const img = document.getElementById(previewId);
+    img.src = e.target.result;
+    img.style.display = 'block';
+    // hide icon/hint
+    const dz = img.closest('.img-dropzone');
+    dz.querySelector('.drop-icon').style.display='none';
+    dz.querySelector('.drop-hint').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ══════════════════════════════
+//  OLLAMA
+// ══════════════════════════════
+async function connectOllama() {
+  const url = document.getElementById('ollamaUrl').value.trim();
+  const orb = document.getElementById('orb');
+  const txt = document.getElementById('ollamaStatus');
+  orb.className='status-orb spin'; txt.textContent='Verbinde mit Ollama…';
+  try {
+    const r = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(4000) });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    const models = (d.models||[]).map(m=>m.name).join(', ') || '(keine Modelle geladen)';
+    orb.className='status-orb on';
+    txt.textContent = `Verbunden · ${models}`;
+    G.connected = true;
+  } catch(e) {
+    orb.className='status-orb err';
+    txt.textContent = `Fehler: ${e.message} — Läuft "ollama serve"?`;
+    G.connected = false;
+  }
+}
+
+async function ollamaGenerate(prompt, imgBase64) {
+  const url   = document.getElementById('ollamaUrl').value.trim();
+  const model = document.getElementById('ollamaModel').value.trim() || 'llava';
+  const body  = { model, prompt, stream:false };
+  if (imgBase64) body.images = [imgBase64.split(',')[1]];
+  const r = await fetch(`${url}/api/generate`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(90000),
+  });
+  if (!r.ok) throw new Error('Ollama HTTP '+r.status);
+  return (await r.json()).response || '';
+}
+
+// ══════════════════════════════
+//  BUILD PROMPT
+// ══════════════════════════════
+function buildPrompt(textVal, imgPresent, hint) {
+  const playerList = G.players.map(p=>`${p.name} (${p.fac.name}, ${p.pts} SP)`).join(', ');
+  const activeName = G.players[G.activePlayer]?.name || 'Unbekannt';
+  const hintStr = hint ? `\nSchwerpunkt dieses Ereignisses: ${hint}.` : '';
+  const recent = G.events.slice(-3).map(e=>e.summary).join(' | ') || '—';
+  const hasGrauasche = G.players.some(p=>p.fac.id==='grauasche');
+  const grauStr = hasGrauasche
+    ? '\nACHTUNG: Die Grauasche ist im Spiel. Sie verfolgt das Ziel, den Kaelthas-Turm zu reaktivieren. Beziehe das subtil ein wenn passend.'
+    : '';
+
+  return `Du bist die WELTMASCHINE des Brettspiels AETHORIA — Das Erbe der zerstörten Welt.
+Du spielst NICHT als einzelner Gegner, sondern als die lebendige Welt selbst: Wirtschaft, Wetter, Natur, Gesellschaft, Unfälle, politische Lage, Ökologie, Aether-Energie.
+
+AKTUELLE SPIELSITUATION:
+- Runde ${G.round} von ${G.totalRounds}
+- Szenario: ${G.scenario}
+- Aktiver Spieler: ${activeName}
+- Weltlage: ${MOODS[G.moodIdx]} (Stufe ${G.moodIdx+1}/6)
+- Spieler: ${playerList}
+${textVal ? `- Spielerbericht: ${textVal}` : '- [Spielfeld-Foto wurde übermittelt]'}
+${hintStr}
+- Letzte Ereignisse: ${recent}
+${grauStr}
+
+SPIELWELT-KONTEXT:
+Der Kontinent Aethoria wurde vor 300 Jahren durch einen Magikerunfall (Kaelthas-Turm) zerstört. Aetherwunden (glühende Risse) durchziehen das Land. Die sechs Fraktionen bauen Städte, Festungen, Einheiten, kämpfen um Gebiete und Ressourcen. Die Weltlage steigt/sinkt je nach Spieleraktionen.
+
+ANWEISUNG:
+Generiere EIN dramatisches, atmosphärisches Weltereignis (3-4 Sätze, flüssiger Erzählstil, Deutsch). Dann genau 2-4 konkrete Spieleffekte im Format "EFFEKT: [kurze Anweisung]".
+
+Die Welt ist lebendig, überraschend, manchmal gnädig, manchmal grausam. Reagiere direkt auf das was die Spieler getan haben. Sei kreativ und spezifisch — vermeide generische Antworten.
+
+Format (strikt einhalten):
+[Erzähltext des Weltgeschehens, 3-4 Sätze]
+EFFEKT: [konkreter Spieleffekt 1]
+EFFEKT: [konkreter Spieleffekt 2]
+EFFEKT: [konkreter Spieleffekt 3, optional]
+EFFEKT: [konkreter Spieleffekt 4, optional]
+
+Antworte ausschliesslich auf Deutsch. Kein Präambel, kein Nachtext.`;
+}
+
+// ══════════════════════════════
+//  DEMO FALLBACK
+// ══════════════════════════════
+const DEMOS = {
+  economy: [
+    `Die Handelsnetzwerke geraten in Bewegung. Ein unerwarteter Preisverfall bei Eisenwaren erschüttert die Märkte — wer auf Vorrat gesetzt hat, profitiert, wer gerade kaufen wollte, findet leere Regale. Kaufleute aus fernen Ländern erscheinen an den Küsten, angelockt durch das Chaos.
+EFFEKT: Alle Rohstofflager verlieren 1 Einheit Metall
+EFFEKT: Spieler mit Handelsposten erhalten +2 Münzen
+EFFEKT: Baukosten für Manufakturen sinken um 1 Ressource bis Rundenende`,
+    `Die Salzlieferungen aus dem Süden versiegen plötzlich. Gerüchte über eine Blockade des Tidenrats machen die Runde. Die Nahrungsmittelpreise explodieren innerhalb von Stunden.
+EFFEKT: Alle Spieler ohne Küstengebäude: -1 Nahrung
+EFFEKT: Tidenrat: +3 SP durch Monopol-Bonus
+EFFEKT: Neue Handelsroute Ost-West öffnet sich als Alternative`,
+  ],
+  weather: [
+    `Ein Sturmsystem zieht von den nördlichen Bergen heran. Hagelkörner vernichten Erntefelder im Flachland, während Küstenstädte mit steigendem Wasserstand kämpfen. Die Flüsse treten über die Ufer — was gestern Verkehrsweg war, ist heute Morast.
+EFFEKT: Alle Felder im Norden produzieren diese Runde -1 Nahrung
+EFFEKT: Küstengebäude benötigen 1 Holz zur Reparatur
+EFFEKT: Alle Flusswege gesperrt — Bewegung darüber kostet +1 AP`,
+    `Ein unnatürlicher Nebel — durchzogen von violetten Aetherfäden — legt sich über den gesamten Kontinent. Keine Sonne, keine Sterne. Kundschafter verlieren sich im Nirgendwo.
+EFFEKT: Alle Aufklärungsaktionen kosten +1 AP
+EFFEKT: Nebelwacht-Fraktion: +2 SP durch Heimvorteil
+EFFEKT: Weltlage sinkt um 1 Stufe (Aether-Einfluss)`,
+  ],
+  accident: [
+    `Explosionen erschüttern die Bergwerksregion! Ein Grubenunglück reisst Versorgungswege in die Tiefe. Die Nachrichten verbreiten sich schnell — Arbeitskräfte fliehen, Investoren zögern. Ein schwarzer Qualm steigt aus dem Gebirge.
+EFFEKT: Alle Bergwerke produzieren diese Runde nicht
+EFFEKT: Jeder Spieler mit Bergwerk-Gebäude verliert 1 Krieger
+EFFEKT: Stein kostet +1 bis ein neuer Stollen gebaut wird`,
+    `Eine alte Brücke bricht unter dem Gewicht eines Warentransports zusammen. Der Silberfluss ist blockiert. Vier Städte sind von ihren Versorgungslinien abgeschnitten.
+EFFEKT: Alle Flussübergänge im Zentrum gesperrt (1 Runde)
+EFFEKT: Spieler mit Gebieten beiderseits des Flusses: -2 SP
+EFFEKT: Wer eine neue Brücke baut (2 Stein) erhält +3 SP`,
+  ],
+  politics: [
+    `Aus den Ruinen des alten Reiches taucht ein Bote auf — er trägt ein Dekret mit dem Siegel des Kaelthas-Turms. Sein Inhalt: Wer die Zentralebene kontrolliert, gilt als rechtmässiger Erbe des Reichs.
+EFFEKT: Zentralebene-Kontrolleur erhält +3 SP sofort
+EFFEKT: Alle anderen Fraktionen verlieren 1 SP durch Legitimationsverlust
+EFFEKT: Die Zentralebene ist ab jetzt Konfliktzone — Angriffe dort kosten -1 AP`,
+    `Flüchtlinge aus den brennenden Aschefeldern strömen in die Städte. Wer sie aufnimmt gewinnt Arbeitskräfte — und soziale Unruhe. Wer sie abweist, erntet Misstrauen.
+EFFEKT: Spieler mit leeren Siedlungsplätzen: +2 Bevölkerung, -1 SP (Unruhe)
+EFFEKT: Spieler die ablehnen: -1 Bevölkerung, aber +1 SP (Stabilität)`,
+  ],
+  nature: [
+    `Die Aetherwunden im Osten pulsieren stärker als je zuvor. Neue Kristallformationen brechen durch den Boden — wunderschön und brandgefährlich. Tiere fliehen aus einem Radius von drei Tagesmärschen.
+EFFEKT: Aetherwunde Ost: Umgebungsfelder produzieren keine Nahrung
+EFFEKT: Nebelwacht: +2 Aether-Ressource gratis
+EFFEKT: Alle Einheiten in Aether-Nähe: Kampfwurf -1 (Mutation)`,
+    `Ein Schwarm von zehntausend Vögeln — normalerweise ein gutes Zeichen — kehrt plötzlich um und fliegt südwärts. Die Alten sagen, sie fliehen vor etwas. Die Jungen fragen: Wovor?
+EFFEKT: Waldkacheln im Norden produzieren doppelt (Tiere flüchten dorthin)
+EFFEKT: Weltlage-Marker: Beobachte nächste Runde genau
+EFFEKT: Alle Spieler ziehen 1 Naturkarte vom Stapel`,
+  ],
+  special: [
+    `Der Kaelthas-Turm — seit dreihundert Jahren eine Ruine — leuchtet für einen kurzen Moment in einem blendenden Weiss. Dann Stille. Die Aetherwunden im ganzen Land pulsieren synchron, wie ein Herzschlag. Niemand weiss was das bedeutet.
+EFFEKT: Alle Aetherwunden: +1 Kristall-Ressource diese Runde
+EFFEKT: Grauasche (falls im Spiel): Geheimziel-Fortschritt +1
+EFFEKT: Weltlage sinkt um 1 Stufe — die Welt erinnert sich`,
+  ],
+  '': [
+    `Die Welt atmet tief und unruhig. In den Nordwäldern verlassen Vogelschwärme ihre Nester ohne ersichtlichen Grund. Ein alter Brunnen in der Zentralebene versiegt plötzlich — nach hundert Jahren Dienst. Händler berichten von merkwürdigen Lichtern über den Aetherwunden.
+EFFEKT: Kundschafteraktionen kosten +1 AP (Sichtbehinderung)
+EFFEKT: Neue Handelsroute im Osten öffnet sich spontan
+EFFEKT: Wasserressourcen im Zentrum -1 (bis Reparatur 1 Stein)`,
+    `Drei Sonnen standen heute Morgen am Horizont — optische Täuschung, sagen die Gelehrten. Zeichen, sagen die Gläubigen. In jedem Fall: Die Stimmung im Volk ist aufgewühlt, die Gerüchte schwingen.
+EFFEKT: Alle Fraktionen: +1 Bevölkerungswachstum (Hoffnung)
+EFFEKT: Aber: +1 Unruhe in Städten mit mehr als 3 Einheiten
+EFFEKT: Nebelwacht darf eine Prophezeiungskarte ziehen`,
+  ],
+};
+
+function demoResponse(hint) {
+  const pool = DEMOS[hint] || DEMOS[''];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ══════════════════════════════
+//  CALL WORLD
+// ══════════════════════════════
+async function callWorld() {
+  const btn = document.getElementById('btnWorld');
+  const err = document.getElementById('errBox');
+  err.style.display = 'none';
+
+  // Gather input
+  const activeTab = document.querySelector('.itab.active').textContent.trim();
+  let textVal = '', imgData = null;
+  if (activeTab.includes('Text')) {
+    textVal = document.getElementById('txtInput').value.trim();
+  } else if (activeTab.includes('Foto')) {
+    imgData = G.imgData1;
+  } else {
+    textVal = document.getElementById('txtInput2').value.trim();
+    imgData = G.imgData2;
+  }
+  if (!textVal && !imgData) {
+    err.textContent = 'Bitte Text eingeben oder ein Foto hochladen.';
+    err.style.display = 'block';
+    return;
+  }
+
+  const hint = document.getElementById('eventHint').value;
+  const prompt = buildPrompt(textVal, !!imgData, hint);
+
+  // Show loading
+  const feed = document.getElementById('worldFeed');
+  const loading = document.createElement('div');
+  loading.className = 'event-loading';
+  loading.innerHTML = `<div class="rune-spin"></div><div class="loading-txt">Die Welt verarbeitet<span class="loading-dots"></span></div>`;
+  if (feed.querySelector('.empty-feed')) feed.innerHTML = '';
+  feed.prepend(loading);
+  btn.disabled = true;
+
+  try {
+    let response;
+    if (G.connected) {
+      response = await ollamaGenerate(prompt, imgData);
+    } else {
+      await new Promise(r=>setTimeout(r,1400+Math.random()*600));
+      response = demoResponse(hint);
+    }
+    loading.remove();
+    addEvent(response, hint || detectType(response));
+
+    // mood progression
+    if (G.events.length % 3 === 0 && G.moodIdx < 5) G.moodIdx++;
+    // Healing events nudge mood up
+    if (response.toLowerCase().includes('erholt') || response.toLowerCase().includes('blüh')) {
+      if (G.moodIdx > 0) G.moodIdx--;
+    }
+    updateHUD();
+
+    // Clear inputs
+    document.getElementById('txtInput').value = '';
+    document.getElementById('txtInput2').value = '';
+  } catch(e) {
+    loading.remove();
+    err.textContent = `Fehler: ${e.message} — Ist "ollama serve" gestartet?`;
+    err.style.display = 'block';
+  }
+  btn.disabled = false;
+}
+
+function detectType(txt) {
+  const t = txt.toLowerCase();
+  if (t.match(/markt|handel|münz|preis|kauf|steuer/)) return 'economy';
+  if (t.match(/sturm|regen|wetter|flut|winter|nebel|schnee|dürre/)) return 'weather';
+  if (t.match(/unglück|explosion|feuer|unfall|seuche|brücke/)) return 'accident';
+  if (t.match(/aufstand|dekret|volk|flüchtl|pakt|bündnis/)) return 'politics';
+  if (t.match(/tier|wald|erd|natur|ernte|schwarm|wunde|aether/)) return 'nature';
+  if (t.match(/kaelthas|turm|kristall|leuchtet|magisch/)) return 'special';
+  return 'weather';
+}
+
+function addEvent(raw, type) {
+  const lines = raw.split('\n').filter(l=>l.trim());
+  const narrative = lines.filter(l=>!l.startsWith('EFFEKT:')).join(' ').trim();
+  const effects = lines.filter(l=>l.startsWith('EFFEKT:')).map(l=>l.replace('EFFEKT:','').trim());
+
+  G.events.push({ summary: narrative.slice(0,90)+'…', type, round:G.round });
+  document.getElementById('dispEvents').textContent = G.events.length;
+
+  const tag = TYPE_TAGS[type] || '🌍 Weltgeschehen';
+  const el = document.createElement('div');
+  el.className = `event-card ${type}`;
+  el.innerHTML = `
+    <div class="event-head">
+      <span class="event-type-tag">${tag}</span>
+      <span class="event-meta">Runde ${G.round} · ${G.players[G.activePlayer]?.name||'?'}</span>
+    </div>
+    <div class="event-body">${narrative || raw}</div>
+    ${effects.length ? `<div class="event-effects">${effects.map(e=>`<span class="effect-chip">⟶ ${e}</span>`).join('')}</div>` : ''}`;
+  document.getElementById('worldFeed').prepend(el);
+}
+
+// ══════════════════════════════
+//  ROUND
+// ══════════════════════════════
+function nextRound() {
+  if (G.round >= G.totalRounds) {
+    const winner = G.players.reduce((a,b)=>a.pts>=b.pts?a:b);
+    alert(`⚔ Das Spiel ist vorbei!\n\nErgebnis:\n${G.players.map(p=>`${p.name}: ${p.pts} SP`).join('\n')}\n\n✦ Sieger: ${winner.name} mit ${winner.pts} SP\n\nGeheimziele jetzt aufdecken!`);
+    return;
+  }
+  G.round++;
+  G.activePlayer = (G.activePlayer + 1) % G.players.length;
+  // Reset image data
+  G.imgData1 = null; G.imgData2 = null;
+  document.getElementById('imgPreview').style.display='none';
+  document.getElementById('imgPreview2').style.display='none';
+  updateHUD();
+  renderPlayers();
+}
+</script>
+</body>
+</html>

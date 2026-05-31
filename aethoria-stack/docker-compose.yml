@@ -1,0 +1,29 @@
+version: "3.8"
+
+# ═══════════════════════════════════════════════
+#  AETHORIA — Companion App Stack
+#  Ollama läuft auf dem Host (nicht in Docker)
+#
+#  Portainer Stack Environment Variables:
+#    APP_PORT      → Port der Web-App       (default: 8080)
+#    OLLAMA_URL    → Ollama API URL         (default: http://host.docker.internal:11434)
+#    OLLAMA_MODEL  → Ollama Modell          (default: llama3.1:8b)
+# ═══════════════════════════════════════════════
+
+services:
+  aethoria:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aethoria-companion
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    labels:
+      - "com.aethoria.description=AETHORIA Companion Weltmaschine"
+      - "com.aethoria.version=1.0"

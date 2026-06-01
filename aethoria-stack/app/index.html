@@ -1003,7 +1003,7 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
   <div class="main-panel" id="panel-brett">
     <div class="prose">
       <h2>Referenz-Spielbrett</h2>
-      <p>So könnte euer Spielfeld nach <em>3–4 Runden mit 4 Spielern</em> aussehen. Nutzt dieses Bild als Vorlage — oder ladet ein Foto eures echten Bretts in die Weltmaschine (Tab „Spiel").</p>
+      <p>So könnte euer Spielfeld nach <em>3–4 Runden</em> aussehen. Die <strong>sechs Heimatgebiete</strong> (durchgezogener Rahmen) liegen fest am Rand, die Mitte wird jedes Spiel zufällig gefüllt. Nutzt dieses Bild als Vorlage — oder ladet ein Foto eures echten Bretts in die Weltmaschine (Tab „Spiel").</p>
     </div>
     <div class="board-ref-wrap" id="boardRefWrap"></div>
   </div>
@@ -2220,7 +2220,7 @@ function loadContent() {
 // ══════════════════════════════
 //  REFERENCE BOARD (4 Spieler, ~Runde 3-4)
 // ══════════════════════════════
-const BOARD_IMAGE_PROMPT = `Top-down view of a complete hexagonal strategy board game in mid-game, 9 by 7 grid of interlocking hex tiles, varied terrain: green forests with tiny trees, grey rocky mountains with snow caps, golden plains, blue coastal water at the edges, dark volcanic ash fields, glowing purple aether rift tiles, ancient stone ruins in the center, a winding river. Small 3D printed buildings on tiles: settlements, towns with towers, fortresses, in four player colors (rust orange, teal, purple, gold). Warrior tokens scattered. 3D printed plastic miniatures look, warm tabletop lighting, photorealistic, sharp focus, 1536x1024`;
+const BOARD_IMAGE_PROMPT = `Top-down view of a complete hexagonal strategy board game in mid-game, 9 by 7 grid of interlocking hex tiles. Six distinct fortified home territories at the board edges, each a triangular cluster of 3 hexes in a faction color (rust mountains, teal coast, purple aether crystals, gold plains, green forest, red volcanic). The center is filled with mixed terrain: stone ruins, winding rivers, plains. Small 3D printed buildings on tiles: settlements, towns with towers, fortresses. Warrior tokens scattered. 3D printed plastic miniatures look, warm tabletop lighting, photorealistic, sharp focus, 1536x1024`;
 
 function copyBoardPrompt() {
   navigator.clipboard.writeText(BOARD_IMAGE_PROMPT).then(function(){
@@ -2246,25 +2246,45 @@ function renderReferenceBoard() {
     volcano:{f:'#2a1410',s:'#6a2818'}, aether:{f:'#1c0c2c',s:'#6a30a0'},
     ruins:{f:'#241c10',s:'#6a5a30'}, river:{f:'#10222c',s:'#2a6a8a'},
   };
-  const FAC = { eisengilde:'#c45a2a', tidenrat:'#2a8878', nebelwacht:'#6a3898', sonnenbund:'#c89030' };
+  const FAC = { eisengilde:'#c45a2a', tidenrat:'#2a8878', nebelwacht:'#6a3898', sonnenbund:'#c89030', wildklinge:'#4a7828', grauasche:'#a82020' };
 
   const LAYOUT = [
-    'forest','forest','mountain','mountain','aether','mountain','mountain','forest','forest',
-    'forest','plains','mountain','ruins','plains','ruins','mountain','plains','forest',
-    'coast','plains','plains','river','plains','river','plains','plains','coast',
-    'coast','coast','plains','river','ruins','river','plains','coast','coast',
-    'coast','plains','plains','plains','plains','plains','plains','plains','coast',
-    'forest','plains','volcano','ruins','plains','ruins','volcano','plains','forest',
-    'forest','forest','volcano','volcano','aether','volcano','volcano','forest','forest',
+    'aether','aether','forest','mountain','river','mountain','volcano','volcano','aether',
+    'aether','plains','forest','ruins','plains','ruins','plains','volcano','volcano',
+    'mountain','plains','plains','river','plains','river','plains','plains','coast',
+    'mountain','mountain','plains','ruins','plains','ruins','plains','coast','coast',
+    'mountain','plains','plains','river','plains','river','plains','plains','coast',
+    'forest','forest','plains','ruins','plains','ruins','plains','plains','coast',
+    'forest','forest','forest','plains','river','plains','plains','coast','coast',
   ];
 
-  // Owner + building map (idx -> {owner, building})
+  // Heimatgebiete (Pyramide: 2 unten + 1 oben mittig), idx-Liste je Fraktion
+  // Pyramide-Form auf dem Hexgrid: top = oberes Feld, bl/br = untere zwei Felder
+  const HOMES = {
+    nebelwacht: { idxs:[0,1,10], terr:'aether',   tip:0  },   // oben-links
+    grauasche:  { idxs:[7,8,17], terr:'volcano',  tip:8  },   // oben-rechts
+    eisengilde: { idxs:[18,27,36], terr:'mountain', tip:27 }, // links-mitte
+    tidenrat:   { idxs:[26,35,44], terr:'coast',  tip:35 },   // rechts-mitte
+    wildklinge: { idxs:[45,54,55], terr:'forest', tip:54 },   // unten-links
+    sonnenbund: { idxs:[52,61,62], terr:'plains', tip:61 },   // unten-rechts (plains/grass)
+  };
+
+  // Reverse: idx -> {fac, isTip}
+  const HOMEMAP = {};
+  Object.entries(HOMES).forEach(([fac,h])=>{
+    h.idxs.forEach(i=>{ HOMEMAP[i] = { fac, tip: i===h.tip }; });
+  });
+
+  // Spielsteine außerhalb der Heimat (idx -> {owner, building}) — mid-game
   const PIECES = {
-    10:{o:'eisengilde',b:'city'}, 11:{o:'eisengilde',b:'fortress'}, 2:{o:'eisengilde',b:'settlement'}, 20:{o:'eisengilde'},
-    18:{o:'tidenrat',b:'city'}, 27:{o:'tidenrat',b:'settlement'}, 28:{o:'tidenrat',b:'fortress'}, 19:{o:'tidenrat'},
-    6:{o:'nebelwacht',b:'settlement'}, 4:{o:'nebelwacht',b:'fortress'}, 15:{o:'nebelwacht',b:'city'}, 16:{o:'nebelwacht'},
-    47:{o:'sonnenbund',b:'city'}, 37:{o:'sonnenbund',b:'settlement'}, 38:{o:'sonnenbund',b:'fortress'}, 46:{o:'sonnenbund'},
-    31:{o:'nebelwacht',b:'settlement'}, 30:{o:'sonnenbund'}, 32:{o:'tidenrat'},
+    27:{o:'eisengilde',b:'city'}, 18:{o:'eisengilde',b:'settlement'}, 36:{o:'eisengilde',b:'fortress'}, 28:{o:'eisengilde'}, 29:{o:'eisengilde'},
+    35:{o:'tidenrat',b:'city'}, 26:{o:'tidenrat',b:'settlement'}, 44:{o:'tidenrat',b:'fortress'}, 34:{o:'tidenrat'},
+    0:{o:'nebelwacht',b:'fortress'}, 1:{o:'nebelwacht',b:'settlement'}, 10:{o:'nebelwacht',b:'city'}, 11:{o:'nebelwacht'},
+    61:{o:'sonnenbund',b:'city'}, 52:{o:'sonnenbund',b:'settlement'}, 62:{o:'sonnenbund',b:'fortress'}, 53:{o:'sonnenbund'},
+    54:{o:'wildklinge',b:'settlement'}, 45:{o:'wildklinge',b:'settlement'}, 55:{o:'wildklinge'},
+    8:{o:'grauasche',b:'city'}, 7:{o:'grauasche',b:'settlement'}, 17:{o:'grauasche',b:'fortress'},
+    // umkämpfte Mitte
+    31:{o:'eisengilde'}, 22:{o:'nebelwacht'}, 40:{o:'tidenrat'}, 49:{o:'sonnenbund'},
   };
   const BICON = { settlement:'🏘', city:'🏙', fortress:'🏰' };
 
@@ -2276,36 +2296,47 @@ function renderReferenceBoard() {
   for (let row=0; row<rows; row++) {
     for (let col=0; col<cols; col++) {
       const idx = row*cols+col;
-      const ter = LAYOUT[idx] || 'plains';
+      // Heimatgebiet überschreibt Terrain mit Fraktions-Terrain
+      const home = HOMEMAP[idx];
+      let ter = LAYOUT[idx] || 'plains';
+      if (home) ter = HOMES[home.fac].terr;
       const def = TER[ter];
       const cx = w*col + (row%2===1 ? w/2 : 0) + w/2 + 4;
       const cy = r*1.5*row + r + 4;
       svg += `<polygon points="${hexPts(cx,cy,r-1.5)}" fill="${def.f}" stroke="${def.s}" stroke-width="1"/>`;
 
+      // Heimatgebiet: dicker farbiger Rahmen um alle 3 Hexe
+      if (home) {
+        svg += `<polygon points="${hexPts(cx,cy,r-2)}" fill="${FAC[home.fac]}" opacity="0.18"/>`;
+        svg += `<polygon points="${hexPts(cx,cy,r-2)}" fill="none" stroke="${FAC[home.fac]}" stroke-width="2.5" opacity="0.9"/>`;
+        if (home.tip) svg += `<text x="${cx}" y="${cy-r+12}" font-size="9" text-anchor="middle" fill="${FAC[home.fac]}" font-weight="bold">HEIMAT</text>`;
+      }
+
       // terrain glyph
       const TG = {forest:'🌲',mountain:'⛰️',plains:'',coast:'🌊',volcano:'🌋',aether:'⚡',ruins:'🏛️',river:'〰️'};
-      if (TG[ter]) svg += `<text x="${cx}" y="${cy-2}" font-size="15" text-anchor="middle" opacity="0.85">${TG[ter]}</text>`;
+      if (TG[ter]) svg += `<text x="${cx}" y="${cy-2}" font-size="14" text-anchor="middle" opacity="0.85">${TG[ter]}</text>`;
 
-      // ownership + building
+      // ownership ring (nur außerhalb Heimat) + building
       const pc = PIECES[idx];
       if (pc) {
-        svg += `<polygon points="${hexPts(cx,cy,r-3)}" fill="none" stroke="${FAC[pc.o]}" stroke-width="3" opacity="0.85"/>`;
-        if (pc.b) svg += `<text x="${cx}" y="${cy+15}" font-size="14" text-anchor="middle">${BICON[pc.b]}</text>`;
+        if (!home) svg += `<polygon points="${hexPts(cx,cy,r-4)}" fill="none" stroke="${FAC[pc.o]}" stroke-width="2.5" opacity="0.8" stroke-dasharray="4,2"/>`;
+        if (pc.b) svg += `<text x="${cx}" y="${cy+15}" font-size="13" text-anchor="middle">${BICON[pc.b]}</text>`;
       }
     }
   }
   svg += `</svg>`;
 
   const legend = Object.entries(FAC).map(([k,c]) => {
-    const name = {eisengilde:'Eisengilde',tidenrat:'Tidenrat',nebelwacht:'Nebelwacht',sonnenbund:'Sonnenbund'}[k];
+    const name = {eisengilde:'Eisengilde',tidenrat:'Tidenrat',nebelwacht:'Nebelwacht',sonnenbund:'Sonnenbund',wildklinge:'Wildklinge',grauasche:'Grauasche'}[k];
     return `<div class="brl-item"><div class="brl-swatch" style="background:${c}"></div>${name}</div>`;
   }).join('');
 
   wrap.innerHTML = svg +
     `<div class="board-legend-ref">${legend}</div>` +
-    `<div class="board-caption">Standardszenario „Das neue Erbe" · 4 Spieler · ~Runde 3–4.<br>` +
-    `Farbige Ringe = Gebietskontrolle · 🏘 Siedlung · 🏙 Stadt · 🏰 Festung.<br>` +
-    `Die zwei zentralen Ruinen (×2 Siegpunkte) sind hart umkämpft, die Aetherwunden (oben/unten) liefern Kristalle.</div>` +
+    `<div class="board-caption">Episches Szenario · 6 Spieler · ~Runde 3–4.<br>` +
+    `<strong>Durchgezogener Rahmen = festes Heimat-Pyramidengebiet</strong> (immer am selben Ort).<br>` +
+    `Gestrichelter Rahmen = im Spiel erobertes Gebiet · 🏘 Siedlung · 🏙 Stadt · 🏰 Festung.<br>` +
+    `Die Mitte (Ruinen ×2 SP, Flüsse) wird jedes Spiel zufällig aus Einzelkacheln gefüllt.</div>` +
     `<div class="callout" style="margin-top:1.25rem;text-align:left">` +
     `<div class="callout-title">FOTOREALISTISCHES BILD ERZEUGEN (ChatGPT / DALL·E)</div>` +
     `<div class="p-text" id="boardPrompt" onclick="copyBoardPrompt()" style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--vellum2);line-height:1.6;background:rgba(242,232,204,0.04);border-radius:4px;padding:8px 10px;cursor:pointer;border:1px solid rgba(200,144,48,0.15)">${BOARD_IMAGE_PROMPT}</div>` +
@@ -2376,23 +2407,43 @@ const REGELN_HTML = `
 `;
 
 const AUFBAU_HTML = `
+<h2>Das Aufbau-System: Heimatgebiete + variable Mitte</h2>
+<p>Aethoria nutzt ein <em>halb-modulares</em> Spielfeld. Jede Fraktion besitzt ein festes <strong>Heimatgebiet</strong> — ein Pyramiden-Stück aus 3 zusammenhängenden Hex-Feldern. Diese werden immer an derselben Position am Spielfeldrand platziert. Der Raum dazwischen wird aus Einzelkacheln zufällig gefüllt.</p>
+<div class="quote-box">So startet jede Fraktion fair und thematisch stark — aber die Welt zwischen euch ist jedes Mal anders. Andere Konflikte, andere Routen, andere Strategien.</div>
+
+<div class="callout">
+<div class="callout-title">PYRAMIDEN-HEIMATGEBIET (3 Hexe)</div>
+<p>Ein Heimatgebiet ist ein gedrucktes Stück aus 3 Hexfeldern in Pyramidenform: <strong>2 Felder unten, 1 Feld oben mittig</strong>. Es trägt das Terrain & die Optik der jeweiligen Fraktion und ist das stärkste Stück Land jeder Fraktion.</p>
+</div>
+
 <h2>Spielvorbereitung</h2>
 <ol class="step-list">
-<li class="step-item"><div class="step-body"><div class="step-title">Spielfeld auslegen</div><div class="step-desc">63 Hex-Kacheln nach der Brett-Referenz (Tab „Brett") oder zufällig auslegen. Verbindungsstifte einstecken.</div></div></li>
+<li class="step-item"><div class="step-body"><div class="step-title">Heimatgebiete platzieren</div><div class="step-desc">Jede teilnehmende Fraktion legt ihr Pyramiden-Heimatgebiet an die feste Randposition (siehe Brett-Referenz): Eisengilde links-Mitte, Tidenrat rechts-Mitte, Nebelwacht oben-links, Grauasche oben-rechts, Wildklinge unten-links, Sonnenbund unten-rechts.</div></div></li>
+<li class="step-item"><div class="step-body"><div class="step-title">Mitte zufällig füllen</div><div class="step-desc">Mische alle übrigen Einzelkacheln verdeckt. Fülle den Raum zwischen den Heimatgebieten auf, bis das 9×7-Feld komplett ist. Die 2 zentralen Ruinen-Kacheln (×2 Siegpunkte) kommen immer in die Mitte.</div></div></li>
+<li class="step-item"><div class="step-body"><div class="step-title">Nicht genutzte Heimatgebiete</div><div class="step-desc">Bei weniger als 6 Spielern: Lege die Heimatgebiete der ungenutzten Fraktionen NICHT aufs Feld. Fülle diese Randzonen ebenfalls mit zufälligen Einzelkacheln — sie werden zu neutralem, umkämpftem Niemandsland.</div></div></li>
 <li class="step-item"><div class="step-body"><div class="step-title">Weltlage & Runde setzen</div><div class="step-desc">Weltlage-Marker auf Stufe 2 (Stabil), Rundenmarker auf Runde 1.</div></div></li>
-<li class="step-item"><div class="step-body"><div class="step-title">Fraktionen wählen</div><div class="step-desc">Jeder Spieler wählt eine Fraktion und nimmt deren Spielsteine. Bei 2 Spielern gegensätzliche Fraktionen empfohlen.</div></div></li>
-<li class="step-item"><div class="step-body"><div class="step-title">Startsiedlung platzieren</div><div class="step-desc">Jeder setzt 1 Siedlung auf sein Startgebiet (Eisengilde→Gebirge, Tidenrat→Küste, Nebelwacht→Aetherwunde Ost, Sonnenbund→Südebenen, Wildklinge→Wald, Grauasche→Aschefelder).</div></div></li>
+<li class="step-item"><div class="step-body"><div class="step-title">Startsiedlung platzieren</div><div class="step-desc">Jeder setzt 1 Siedlung auf das mittlere (obere) Hexfeld seines Heimatgebiets — die Spitze der Pyramide. Die zwei unteren Felder gelten ab Start als dein Gebiet.</div></div></li>
 <li class="step-item"><div class="step-body"><div class="step-title">Geheimziel ziehen</div><div class="step-desc">Jeder zieht 1 verdeckte Geheimziel-Karte und schaut sie heimlich an.</div></div></li>
 <li class="step-item"><div class="step-body"><div class="step-title">Startressourcen</div><div class="step-desc">Jeder erhält 2 Holz, 2 Stein, 1 Nahrung.</div></div></li>
 <li class="step-item"><div class="step-body"><div class="step-title">Companion App starten</div><div class="step-desc">Tab „Spiel" öffnen, Spieleranzahl & Fraktionen eintragen, Ollama verbinden. Der jüngste Spieler beginnt.</div></div></li>
 </ol>
 
+<h2>Wie entstehen Fraktionsgebiete?</h2>
+<p>Außerhalb des Heimatgebiets <strong>gehört zu Beginn niemandem etwas</strong>. Gebiete entstehen durch <em>Kontrolle</em>:</p>
+<ul>
+<li>Ein Feld zählt als <strong>dein Gebiet</strong>, sobald ein Gebäude oder eine Einheit von dir darauf steht.</li>
+<li><strong>Siedlungen</strong> dürfen nur auf Feldern gebaut werden, die an dein bestehendes Gebiet angrenzen (Ausbreitung).</li>
+<li><strong>Einheiten</strong> dürfen sich frei bewegen und so auch entfernte oder gegnerische Felder erobern.</li>
+<li>Verlässt deine letzte Einheit/Gebäude ein Feld, wird es wieder neutral.</li>
+</ul>
+<p>Dein Heimat-Pyramidengebiet bleibt immer dein — es kann besetzt, aber nie dauerhaft „umgefärbt" werden.</p>
+
 <div class="callout">
 <div class="callout-title">SZENARIEN</div>
-<p><strong>2 Spieler — Duell:</strong> Gegensätzliche Fraktionen, Zentralebene ab Runde 4. ~8 Runden.</p>
-<p><strong>3 Spieler — Dreieck:</strong> Allianzen enden nach 2 Runden. ~9 Runden.</p>
-<p><strong>4 Spieler — Standard:</strong> Ausgewogenes Hauptszenario. ~10 Runden.</p>
-<p><strong>5–6 Spieler — Episch:</strong> Grauasche will den Kaelthas-Turm reaktivieren. ~15 Runden.</p>
+<p><strong>2 Spieler — Duell:</strong> Gegenüberliegende Heimatgebiete, Zentralebene ab Runde 4. ~8 Runden.</p>
+<p><strong>3 Spieler — Dreieck:</strong> Heimatgebiete im Dreieck, Allianzen enden nach 2 Runden. ~9 Runden.</p>
+<p><strong>4 Spieler — Standard:</strong> Vier Ecken, ausgewogenes Hauptszenario. ~10 Runden.</p>
+<p><strong>5–6 Spieler — Episch:</strong> Alle Heimatgebiete, Grauasche will den Kaelthas-Turm reaktivieren. ~15 Runden.</p>
 </div>
 
 <h2>Bau-Kosten</h2>
@@ -2420,6 +2471,18 @@ const MATERIAL_HTML = `
 <tr><td>⚡ Aetherwunde</td><td class="mat-num">4×</td><td>12 mm</td></tr>
 <tr><td>🏛️ Ruinen</td><td class="mat-num">5×</td><td>10 mm</td></tr>
 <tr><td>〰️ Fluss</td><td class="mat-num">4×</td><td>5 mm</td></tr>
+</table>
+<p style="font-size:0.8rem;color:var(--vellum4);font-style:italic">Hinweis: 6 dieser Felder werden durch die Heimatgebiete ersetzt — du druckst also etwas weniger lose Kacheln, dafür die 6 Pyramiden-Stücke.</p>
+
+<div class="mat-cat">HEIMATGEBIETE — 3er-PYRAMIDE PRO FRAKTION</div>
+<table class="mat-table">
+<tr><th>Fraktion</th><th>Terrain</th><th>Anzahl</th></tr>
+<tr><td>⚒ Eisengilde</td><td>Gebirge (3 Hexe)</td><td class="mat-num">1×</td></tr>
+<tr><td>🌊 Tidenrat</td><td>Küste (3 Hexe)</td><td class="mat-num">1×</td></tr>
+<tr><td>🌫 Nebelwacht</td><td>Aetherwunde (3 Hexe)</td><td class="mat-num">1×</td></tr>
+<tr><td>☀ Sonnenbund</td><td>Ebene (3 Hexe)</td><td class="mat-num">1×</td></tr>
+<tr><td>🐺 Wildklinge</td><td>Wald (3 Hexe)</td><td class="mat-num">1×</td></tr>
+<tr><td>💀 Grauasche</td><td>Asche (3 Hexe)</td><td class="mat-num">1×</td></tr>
 </table>
 
 <div class="mat-cat">GEBÄUDE — JE FRAKTION (×6 FARBEN)</div>

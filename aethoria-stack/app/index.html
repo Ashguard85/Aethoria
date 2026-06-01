@@ -1311,13 +1311,36 @@ function startSession() {
   G.sessionId   = sessionUUID();
   G.sessionName = `${G.gameName} — ${new Date().toLocaleDateString('de-CH')}`;
   G.conversation = [];
-  // System-Kontext: einmalig am Anfang injiziert
-  G.conversation.push({
-    role: 'system',
-    content: buildSystemPrompt()
-  });
+  G.conversation.push({ role: 'system', content: buildSystemPrompt() });
   saveSessionLocal();
   renderSessionBar();
+
+  // Phase B: Session im Backend registrieren
+  if (G.apiMode === 'api') {
+    fetch(`${G.apiBase}/session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name:         G.sessionName,
+        game_name:    G.gameName,
+        scenario:     G.scenario,
+        total_rounds: G.totalRounds,
+        players:      G.players.map(p => ({ name: p.name, faction: p.fac.name, pts: p.pts })),
+        id_hint:      G.sessionId,   // Backend soll diese ID verwenden
+      })
+    })
+    .then(r => r.json())
+    .then(d => {
+      // Backend kann eigene ID zurückgeben — übernehmen
+      if (d.id && d.id !== G.sessionId) {
+        G.sessionId = d.id;
+        saveSessionLocal();
+      }
+      console.log('[AETHORIA] Session im Backend registriert:', G.sessionId);
+      renderSessionBar();
+    })
+    .catch(e => console.warn('[AETHORIA] Backend-Registrierung fehlgeschlagen:', e));
+  }
 }
 
 // System-Prompt: einmalig, definiert die Welt-Persona

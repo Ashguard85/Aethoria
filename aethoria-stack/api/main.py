@@ -62,6 +62,7 @@ class SessionCreate(BaseModel):
     scenario: Optional[str] = 'Standard'
     total_rounds: Optional[int] = 10
     players: Optional[list] = []
+    id_hint: Optional[str] = None   # Frontend kann eigene ID vorschlagen
 
 class MessageRequest(BaseModel):
     prompt: str
@@ -149,7 +150,9 @@ def health():
 
 @app.post('/session', status_code=201)
 def create_session(data: SessionCreate):
-    sid = 'sess-' + uuid.uuid4().hex[:12]
+    # Verwende id_hint vom Frontend wenn vorhanden (Session-ID-Sync)
+    sid = data.id_hint if (data.id_hint and data.id_hint.startswith('sess-')) \
+          else 'sess-' + uuid.uuid4().hex[:12]
     now = int(time.time() * 1000)
     with get_db() as db:
         db.execute(

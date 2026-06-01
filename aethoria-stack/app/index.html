@@ -683,6 +683,106 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
   color:var(--vellum3); white-space:pre-wrap;
   font-family:'IM Fell English',serif;
 }
+
+/* ═══ MAIN TAB NAVIGATION ═══ */
+.main-tabs {
+  display:flex; gap:0.3rem; margin-bottom:1.5rem;
+  border-bottom:1px solid rgba(200,144,48,0.25);
+  flex-wrap:wrap;
+}
+.main-tab {
+  background:transparent; border:none;
+  border-bottom:2px solid transparent;
+  color:var(--vellum4); padding:0.6rem 1rem;
+  cursor:pointer; font-family:'IM Fell English SC',serif;
+  font-size:0.78rem; letter-spacing:0.1em;
+  transition:all 0.2s; margin-bottom:-1px;
+}
+.main-tab:hover { color:var(--vellum2); }
+.main-tab.active {
+  color:var(--gold3);
+  border-bottom-color:var(--gold2);
+}
+.main-panel { display:none; animation:fadeIn 0.3s ease; }
+.main-panel.active { display:block; }
+
+/* ═══ CONTENT PROSE (Regeln/Aufbau) ═══ */
+.prose { font-family:'IM Fell English',serif; line-height:1.7; color:var(--vellum2); }
+.prose h2 {
+  font-family:'Uncial Antiqua',serif; font-size:1.3rem;
+  color:var(--gold3); margin:1.5rem 0 0.6rem;
+  border-bottom:1px solid rgba(200,144,48,0.2); padding-bottom:0.3rem;
+}
+.prose h3 {
+  font-family:'IM Fell English SC',serif; font-size:0.95rem;
+  color:var(--gold2); letter-spacing:0.08em; margin:1.2rem 0 0.4rem;
+}
+.prose p { margin-bottom:0.8rem; font-size:0.95rem; }
+.prose ul, .prose ol { margin:0.5rem 0 1rem 1.4rem; }
+.prose li { margin-bottom:0.35rem; font-size:0.92rem; }
+.prose em { color:var(--gold2); font-style:italic; }
+.prose strong { color:var(--vellum); }
+.quote-box {
+  border-left:3px solid var(--gold2);
+  background:rgba(200,144,48,0.06);
+  padding:0.7rem 1rem; margin:1rem 0;
+  font-style:italic; font-size:0.92rem; color:var(--vellum2);
+}
+.callout {
+  border:1px solid rgba(200,144,48,0.25);
+  border-radius:5px; padding:0.8rem 1rem; margin:1rem 0;
+  background:rgba(18,14,8,0.6);
+}
+.callout-title {
+  font-family:'IM Fell English SC',serif; font-size:0.7rem;
+  letter-spacing:0.15em; color:var(--gold2); margin-bottom:0.4rem;
+}
+
+/* ═══ MATERIAL TABLE ═══ */
+.mat-table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.85rem; }
+.mat-table th {
+  font-family:'IM Fell English SC',serif; font-size:0.65rem;
+  letter-spacing:0.12em; color:var(--gold2); text-align:left;
+  padding:0.5rem 0.6rem; border-bottom:2px solid rgba(200,144,48,0.3);
+}
+.mat-table td {
+  padding:0.45rem 0.6rem; border-bottom:1px solid rgba(200,144,48,0.12);
+  color:var(--vellum2);
+}
+.mat-table tr:hover td { background:rgba(200,144,48,0.04); }
+.mat-num { font-family:'JetBrains Mono',monospace; color:var(--gold3); }
+.mat-cat {
+  font-family:'IM Fell English SC',serif; font-size:0.72rem;
+  letter-spacing:0.12em; color:var(--gold2);
+  margin:1.3rem 0 0.3rem; padding-top:0.6rem;
+}
+
+/* ═══ SETUP STEPS ═══ */
+.step-list { counter-reset:stp; list-style:none; margin:1rem 0; padding:0; }
+.step-item {
+  display:flex; gap:0.9rem; align-items:flex-start;
+  background:rgba(18,14,8,0.6); border:1px solid rgba(200,144,48,0.15);
+  border-radius:5px; padding:0.8rem 1rem; margin-bottom:0.6rem;
+}
+.step-item::before {
+  counter-increment:stp; content:counter(stp,decimal-leading-zero);
+  font-family:'Uncial Antiqua',serif; font-size:1rem;
+  color:var(--gold2); flex-shrink:0;
+}
+.step-body { flex:1; }
+.step-title { font-family:'IM Fell English SC',serif; color:var(--vellum); font-size:0.85rem; margin-bottom:0.2rem; letter-spacing:0.05em; }
+.step-desc { font-size:0.85rem; color:var(--vellum3); line-height:1.5; }
+
+/* ═══ REFERENCE BOARD ═══ */
+.board-ref-wrap { text-align:center; }
+.board-ref-svg { max-width:100%; height:auto; border:1px solid rgba(200,144,48,0.2); border-radius:6px; background:#0a0d0a; }
+.board-caption { font-size:0.8rem; color:var(--vellum4); font-style:italic; margin-top:0.75rem; line-height:1.6; }
+.board-legend-ref {
+  display:flex; flex-wrap:wrap; gap:0.6rem; justify-content:center;
+  margin-top:1rem;
+}
+.brl-item { display:flex; align-items:center; gap:0.35rem; font-size:0.72rem; color:var(--vellum3); }
+.brl-swatch { width:14px; height:14px; border-radius:3px; }
 </style>
 </head>
 <body>
@@ -708,26 +808,22 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
   </div>
 
 
-  <!-- ═══ INFO DRAWER ═══ -->
-  <div class="info-drawer" id="infoDrawer">
-    <div class="info-drawer-header" onclick="toggleDrawer()">
-      <span class="info-drawer-title">📜 Spielwelt & Regeln — Referenz</span>
-      <span class="info-drawer-arrow" id="drawerArrow">▼</span>
-    </div>
-    <div class="info-drawer-body">
-      <div class="info-tabs">
-        <button class="itab2 active" onclick="switchInfo('lore',this)">⚔ Spielwelt & Lore</button>
-        <button class="itab2" onclick="switchInfo('rules',this)">📋 Regeln</button>
-        <button class="itab2" onclick="switchInfo('factions',this)">🛡 Fraktionen</button>
-        <button class="itab2" onclick="switchInfo('scoring',this)">⭐ Siegpunkte</button>
-      </div>
-      <div class="info-content" id="infoContent">Lade…</div>
-    </div>
+  <!-- ═══ MAIN TAB NAVIGATION ═══ -->
+  <div class="main-tabs">
+    <button class="main-tab active" onclick="switchMain('spiel',this)">⚔ Spiel</button>
+    <button class="main-tab" onclick="switchMain('regeln',this)">📋 Regeln</button>
+    <button class="main-tab" onclick="switchMain('aufbau',this)">🛠 Aufbau</button>
+    <button class="main-tab" onclick="switchMain('material',this)">📦 Material</button>
+    <button class="main-tab" onclick="switchMain('brett',this)">🗺 Brett-Referenz</button>
   </div>
+
+  <!-- ═══ PANEL: SPIEL ═══ -->
+  <div class="main-panel active" id="panel-spiel">
 
   <!-- ═══ SETUP ═══ -->
   <div id="setupPanel" class="setup-panel">
     <div class="sec-title">Neue Partie starten</div>
+
 
     <div class="setup-grid">
       <div class="setup-field">
@@ -885,6 +981,32 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
     </div>
 
   </div><!-- /gameScreen -->
+
+  </div><!-- /panel-spiel -->
+
+  <!-- ═══ PANEL: REGELN ═══ -->
+  <div class="main-panel" id="panel-regeln">
+    <div class="prose" id="regelnContent"></div>
+  </div>
+
+  <!-- ═══ PANEL: AUFBAU ═══ -->
+  <div class="main-panel" id="panel-aufbau">
+    <div class="prose" id="aufbauContent"></div>
+  </div>
+
+  <!-- ═══ PANEL: MATERIAL ═══ -->
+  <div class="main-panel" id="panel-material">
+    <div class="prose" id="materialContent"></div>
+  </div>
+
+  <!-- ═══ PANEL: BRETT-REFERENZ ═══ -->
+  <div class="main-panel" id="panel-brett">
+    <div class="prose">
+      <h2>Referenz-Spielbrett</h2>
+      <p>So könnte euer Spielfeld nach <em>3–4 Runden mit 4 Spielern</em> aussehen. Nutzt dieses Bild als Vorlage — oder ladet ein Foto eures echten Bretts in die Weltmaschine (Tab „Spiel").</p>
+    </div>
+    <div class="board-ref-wrap" id="boardRefWrap"></div>
+  </div>
 
 </div><!-- /app -->
 
@@ -2075,6 +2197,266 @@ function switchInfo(key, btn) {
   btn.classList.add('active');
   document.getElementById('infoContent').textContent = INFO_SECTIONS[key];
 }
+
+// ══════════════════════════════
+//  MAIN TAB SYSTEM
+// ══════════════════════════════
+let _contentLoaded = false;
+function switchMain(key, btn) {
+  document.querySelectorAll('.main-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.main-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + key).classList.add('active');
+  if (!_contentLoaded) { loadContent(); _contentLoaded = true; }
+  if (key === 'brett') renderReferenceBoard();
+}
+
+function loadContent() {
+  document.getElementById('regelnContent').innerHTML   = REGELN_HTML;
+  document.getElementById('aufbauContent').innerHTML   = AUFBAU_HTML;
+  document.getElementById('materialContent').innerHTML = MATERIAL_HTML;
+}
+
+// ══════════════════════════════
+//  REFERENCE BOARD (4 Spieler, ~Runde 3-4)
+// ══════════════════════════════
+const BOARD_IMAGE_PROMPT = `Top-down view of a complete hexagonal strategy board game in mid-game, 9 by 7 grid of interlocking hex tiles, varied terrain: green forests with tiny trees, grey rocky mountains with snow caps, golden plains, blue coastal water at the edges, dark volcanic ash fields, glowing purple aether rift tiles, ancient stone ruins in the center, a winding river. Small 3D printed buildings on tiles: settlements, towns with towers, fortresses, in four player colors (rust orange, teal, purple, gold). Warrior tokens scattered. 3D printed plastic miniatures look, warm tabletop lighting, photorealistic, sharp focus, 1536x1024`;
+
+function copyBoardPrompt() {
+  navigator.clipboard.writeText(BOARD_IMAGE_PROMPT).then(function(){
+    const h = document.getElementById('boardPromptHint');
+    h.textContent = '✓ Kopiert! Jetzt in ChatGPT einfügen.';
+    h.style.color = '#4caf50';
+    setTimeout(function(){ h.textContent = 'Klicken zum Kopieren — dann in ChatGPT einfügen für ein fotorealistisches Referenzbild'; h.style.color = '#6a8898'; }, 2500);
+  });
+}
+
+function renderReferenceBoard() {
+  const wrap = document.getElementById('boardRefWrap');
+  if (wrap.dataset.done) return;
+
+  const cols = 9, rows = 7, r = 34;
+  const w = r * Math.sqrt(3);
+  const W = Math.ceil(cols * w + w/2 + 20);
+  const H = Math.ceil(rows * r * 1.5 + r + 20);
+
+  const TER = {
+    forest:{f:'#1a2e16',s:'#2a5a22'}, mountain:{f:'#33312c',s:'#5a564c'},
+    plains:{f:'#2a3a16',s:'#48621f'}, coast:{f:'#0e2435',s:'#2a6a8a'},
+    volcano:{f:'#2a1410',s:'#6a2818'}, aether:{f:'#1c0c2c',s:'#6a30a0'},
+    ruins:{f:'#241c10',s:'#6a5a30'}, river:{f:'#10222c',s:'#2a6a8a'},
+  };
+  const FAC = { eisengilde:'#c45a2a', tidenrat:'#2a8878', nebelwacht:'#6a3898', sonnenbund:'#c89030' };
+
+  const LAYOUT = [
+    'forest','forest','mountain','mountain','aether','mountain','mountain','forest','forest',
+    'forest','plains','mountain','ruins','plains','ruins','mountain','plains','forest',
+    'coast','plains','plains','river','plains','river','plains','plains','coast',
+    'coast','coast','plains','river','ruins','river','plains','coast','coast',
+    'coast','plains','plains','plains','plains','plains','plains','plains','coast',
+    'forest','plains','volcano','ruins','plains','ruins','volcano','plains','forest',
+    'forest','forest','volcano','volcano','aether','volcano','volcano','forest','forest',
+  ];
+
+  // Owner + building map (idx -> {owner, building})
+  const PIECES = {
+    10:{o:'eisengilde',b:'city'}, 11:{o:'eisengilde',b:'fortress'}, 2:{o:'eisengilde',b:'settlement'}, 20:{o:'eisengilde'},
+    18:{o:'tidenrat',b:'city'}, 27:{o:'tidenrat',b:'settlement'}, 28:{o:'tidenrat',b:'fortress'}, 19:{o:'tidenrat'},
+    6:{o:'nebelwacht',b:'settlement'}, 4:{o:'nebelwacht',b:'fortress'}, 15:{o:'nebelwacht',b:'city'}, 16:{o:'nebelwacht'},
+    47:{o:'sonnenbund',b:'city'}, 37:{o:'sonnenbund',b:'settlement'}, 38:{o:'sonnenbund',b:'fortress'}, 46:{o:'sonnenbund'},
+    31:{o:'nebelwacht',b:'settlement'}, 30:{o:'sonnenbund'}, 32:{o:'tidenrat'},
+  };
+  const BICON = { settlement:'🏘', city:'🏙', fortress:'🏰' };
+
+  function hexPts(cx,cy,rr){let p=[];for(let i=0;i<6;i++){let a=Math.PI/180*(60*i-30);p.push((cx+rr*Math.cos(a)).toFixed(1)+','+(cy+rr*Math.sin(a)).toFixed(1));}return p.join(' ');}
+
+  let svg = `<svg class="board-ref-svg" viewBox="0 0 ${W} ${H}" width="${W}" xmlns="http://www.w3.org/2000/svg">`;
+  svg += `<rect x="0" y="0" width="${W}" height="${H}" fill="#0a0d0a"/>`;
+
+  for (let row=0; row<rows; row++) {
+    for (let col=0; col<cols; col++) {
+      const idx = row*cols+col;
+      const ter = LAYOUT[idx] || 'plains';
+      const def = TER[ter];
+      const cx = w*col + (row%2===1 ? w/2 : 0) + w/2 + 4;
+      const cy = r*1.5*row + r + 4;
+      svg += `<polygon points="${hexPts(cx,cy,r-1.5)}" fill="${def.f}" stroke="${def.s}" stroke-width="1"/>`;
+
+      // terrain glyph
+      const TG = {forest:'🌲',mountain:'⛰️',plains:'',coast:'🌊',volcano:'🌋',aether:'⚡',ruins:'🏛️',river:'〰️'};
+      if (TG[ter]) svg += `<text x="${cx}" y="${cy-2}" font-size="15" text-anchor="middle" opacity="0.85">${TG[ter]}</text>`;
+
+      // ownership + building
+      const pc = PIECES[idx];
+      if (pc) {
+        svg += `<polygon points="${hexPts(cx,cy,r-3)}" fill="none" stroke="${FAC[pc.o]}" stroke-width="3" opacity="0.85"/>`;
+        if (pc.b) svg += `<text x="${cx}" y="${cy+15}" font-size="14" text-anchor="middle">${BICON[pc.b]}</text>`;
+      }
+    }
+  }
+  svg += `</svg>`;
+
+  const legend = Object.entries(FAC).map(([k,c]) => {
+    const name = {eisengilde:'Eisengilde',tidenrat:'Tidenrat',nebelwacht:'Nebelwacht',sonnenbund:'Sonnenbund'}[k];
+    return `<div class="brl-item"><div class="brl-swatch" style="background:${c}"></div>${name}</div>`;
+  }).join('');
+
+  wrap.innerHTML = svg +
+    `<div class="board-legend-ref">${legend}</div>` +
+    `<div class="board-caption">Standardszenario „Das neue Erbe" · 4 Spieler · ~Runde 3–4.<br>` +
+    `Farbige Ringe = Gebietskontrolle · 🏘 Siedlung · 🏙 Stadt · 🏰 Festung.<br>` +
+    `Die zwei zentralen Ruinen (×2 Siegpunkte) sind hart umkämpft, die Aetherwunden (oben/unten) liefern Kristalle.</div>` +
+    `<div class="callout" style="margin-top:1.25rem;text-align:left">` +
+    `<div class="callout-title">FOTOREALISTISCHES BILD ERZEUGEN (ChatGPT / DALL·E)</div>` +
+    `<div class="p-text" id="boardPrompt" onclick="copyBoardPrompt()" style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--vellum2);line-height:1.6;background:rgba(242,232,204,0.04);border-radius:4px;padding:8px 10px;cursor:pointer;border:1px solid rgba(200,144,48,0.15)">${BOARD_IMAGE_PROMPT}</div>` +
+    `<div id="boardPromptHint" style="font-size:0.65rem;color:#6a8898;margin-top:5px">Klicken zum Kopieren — dann in ChatGPT einfügen für ein fotorealistisches Referenzbild</div>` +
+    `</div>`;
+  wrap.dataset.done = '1';
+}
+
+// ══════════════════════════════
+//  CONTENT (Regeln / Aufbau / Material)
+// ══════════════════════════════
+const REGELN_HTML = `
+<h2>Die Welt von Aethoria</h2>
+<p>Vor 300 Jahren zerbrach das Aethorische Reich, als die Magier des Kaelthas-Turms ein Loch in die Welt rissen. Zurück blieben die <em>Aetherwunden</em> — glühende Risse voller Energie, fruchtbar und tödlich zugleich. Jetzt kämpfen sechs Fraktionen um die Trümmer.</p>
+<div class="quote-box">„Die Erde hält Groll. Sie erinnert sich, was wir ihr antaten — und jede Generation zahlt einen Teil der Schuld."</div>
+
+<h2>Spielziel</h2>
+<p>Sammle über die vereinbarte Rundenzahl die meisten <strong>Siegpunkte (SP)</strong> durch Aufbauen, Gebiete kontrollieren und dein geheimes Fraktionsziel. <strong>Die Welt selbst ist der Gegner</strong>: Nach jeder Runde reagiert die KI-Weltmaschine auf euer Spiel mit Wirtschaft, Wetter, Unfällen und Naturereignissen.</p>
+
+<h2>Rundenablauf</h2>
+<h3>Phase 1 · Ressourcen würfeln</h3>
+<p>2W6 — die Summe bestimmt, welche Regionen produzieren. Gebäude auf produzierenden Feldern liefern Rohstoffe (Siedlung 1, Stadt 2, Festung 1 + Verteidigung).</p>
+<h3>Phase 2 · Karten ziehen</h3>
+<p>1 Karte vom Stapel + 1 Fraktionskarte. Max. 7 Handkarten.</p>
+<h3>Phase 3 · Aktionen (3 AP)</h3>
+<ul>
+<li><strong>Bauen</strong> — Siedlung, Stadt, Festung oder Einheit</li>
+<li><strong>Bewegen</strong> — Einheit bis 2 Felder (Wildklinge im Wald: 3)</li>
+<li><strong>Handeln</strong> — Ressourcentausch mit Nachbar/Hafen</li>
+<li><strong>Forschen</strong> — zusätzliche Karte ziehen</li>
+<li><strong>Angreifen</strong> — W8-Duell gegen Gegner</li>
+<li><strong>Aether anzapfen</strong> — Aetherwunde nutzen</li>
+</ul>
+<p>Aktionen werden verdeckt geplant und gleichzeitig aufgedeckt.</p>
+<h3>Phase 4 · Weltereignis (App)</h3>
+<p>Foto oder Beschreibung in die Weltmaschine eingeben → die KI generiert ein Weltereignis mit konkreten Effekten, die sofort umgesetzt werden.</p>
+<h3>Phase 5 · Siegpunkte notieren</h3>
+<p>Offene Punkte aktualisieren. Geheimziel bleibt verdeckt bis Spielende.</p>
+
+<h2>Kampf</h2>
+<p>Angreifer & Verteidiger würfeln je 1W8 + Boni: Festung +3, eigenes Gebiet +1, Gebirge (Verteidiger) +2, Wildklinge im Wald +2. Höheres Ergebnis gewinnt; bei Gleichstand der Verteidiger. Verlierer verliert 1 Einheit oder 1 Gebäudestufe.</p>
+
+<h2>Siegpunkte</h2>
+<table class="mat-table">
+<tr><th>Quelle</th><th>SP</th></tr>
+<tr><td>Stadt gebaut</td><td class="mat-num">+2</td></tr>
+<tr><td>Festung gebaut</td><td class="mat-num">+1</td></tr>
+<tr><td>Gebiet kontrolliert</td><td class="mat-num">+1</td></tr>
+<tr><td>Zentralebene</td><td class="mat-num">×2</td></tr>
+<tr><td>Aetherwunde</td><td class="mat-num">+3</td></tr>
+<tr><td>Handelsabkommen</td><td class="mat-num">+1</td></tr>
+<tr><td>Geheimziel erfüllt</td><td class="mat-num">0–8</td></tr>
+<tr><td>Weltkatastrophe verursacht</td><td class="mat-num">−3</td></tr>
+</table>
+
+<h2>Weltlage-Skala</h2>
+<ul>
+<li><strong>1 Blühend</strong> — alle Ressourcen +1/Runde</li>
+<li><strong>2 Stabil</strong> — Normalzustand</li>
+<li><strong>3 Angespannt</strong> — Handel −1</li>
+<li><strong>4 Unruhig</strong> — Wachstum gestoppt</li>
+<li><strong>5 Krisenhaft</strong> — Ereignisse doppelt stark</li>
+<li><strong>6 Chaotisch</strong> — Katastrophe möglich, alle verlieren 50% SP</li>
+</ul>
+
+<h2>Spielende</h2>
+<p>Nach der vereinbarten Rundenzahl (Standard 10) — oder wenn die Weltlage Stufe 6 erreicht und eine Katastrophenkarte gezogen wird. Dann werden die Geheimziele aufgedeckt. Wer die meisten SP hat, gewinnt.</p>
+`;
+
+const AUFBAU_HTML = `
+<h2>Spielvorbereitung</h2>
+<ol class="step-list">
+<li class="step-item"><div class="step-body"><div class="step-title">Spielfeld auslegen</div><div class="step-desc">63 Hex-Kacheln nach der Brett-Referenz (Tab „Brett") oder zufällig auslegen. Verbindungsstifte einstecken.</div></div></li>
+<li class="step-item"><div class="step-body"><div class="step-title">Weltlage & Runde setzen</div><div class="step-desc">Weltlage-Marker auf Stufe 2 (Stabil), Rundenmarker auf Runde 1.</div></div></li>
+<li class="step-item"><div class="step-body"><div class="step-title">Fraktionen wählen</div><div class="step-desc">Jeder Spieler wählt eine Fraktion und nimmt deren Spielsteine. Bei 2 Spielern gegensätzliche Fraktionen empfohlen.</div></div></li>
+<li class="step-item"><div class="step-body"><div class="step-title">Startsiedlung platzieren</div><div class="step-desc">Jeder setzt 1 Siedlung auf sein Startgebiet (Eisengilde→Gebirge, Tidenrat→Küste, Nebelwacht→Aetherwunde Ost, Sonnenbund→Südebenen, Wildklinge→Wald, Grauasche→Aschefelder).</div></div></li>
+<li class="step-item"><div class="step-body"><div class="step-title">Geheimziel ziehen</div><div class="step-desc">Jeder zieht 1 verdeckte Geheimziel-Karte und schaut sie heimlich an.</div></div></li>
+<li class="step-item"><div class="step-body"><div class="step-title">Startressourcen</div><div class="step-desc">Jeder erhält 2 Holz, 2 Stein, 1 Nahrung.</div></div></li>
+<li class="step-item"><div class="step-body"><div class="step-title">Companion App starten</div><div class="step-desc">Tab „Spiel" öffnen, Spieleranzahl & Fraktionen eintragen, Ollama verbinden. Der jüngste Spieler beginnt.</div></div></li>
+</ol>
+
+<div class="callout">
+<div class="callout-title">SZENARIEN</div>
+<p><strong>2 Spieler — Duell:</strong> Gegensätzliche Fraktionen, Zentralebene ab Runde 4. ~8 Runden.</p>
+<p><strong>3 Spieler — Dreieck:</strong> Allianzen enden nach 2 Runden. ~9 Runden.</p>
+<p><strong>4 Spieler — Standard:</strong> Ausgewogenes Hauptszenario. ~10 Runden.</p>
+<p><strong>5–6 Spieler — Episch:</strong> Grauasche will den Kaelthas-Turm reaktivieren. ~15 Runden.</p>
+</div>
+
+<h2>Bau-Kosten</h2>
+<table class="mat-table">
+<tr><th>Gebäude</th><th>Kosten</th></tr>
+<tr><td>Siedlung</td><td>1 Holz + 1 Stein</td></tr>
+<tr><td>Stadt (aus Siedlung)</td><td>2 Stein + 1 Erz + 1 Nahrung</td></tr>
+<tr><td>Festung (aus Stadt)</td><td>3 Stein + 2 Erz</td></tr>
+<tr><td>Krieger</td><td>1 Nahrung + 1 Erz</td></tr>
+</table>
+`;
+
+const MATERIAL_HTML = `
+<h2>Stückliste — Komplettes Set</h2>
+<p>Alles 3D-druckbar. Detaillierte Druckanweisungen & ChatGPT-Bildprompts im separaten 3D-Druck-Dokument.</p>
+
+<div class="mat-cat">SPIELFELD — 63 HEX-KACHELN</div>
+<table class="mat-table">
+<tr><th>Kachel</th><th>Anzahl</th><th>Höhe</th></tr>
+<tr><td>🌾 Ebene</td><td class="mat-num">14×</td><td>5 mm</td></tr>
+<tr><td>🌲 Wald</td><td class="mat-num">12×</td><td>8 mm</td></tr>
+<tr><td>⛰️ Gebirge</td><td class="mat-num">10×</td><td>18 mm</td></tr>
+<tr><td>🌊 Küste</td><td class="mat-num">8×</td><td>6 mm</td></tr>
+<tr><td>🌋 Asche</td><td class="mat-num">6×</td><td>10 mm</td></tr>
+<tr><td>⚡ Aetherwunde</td><td class="mat-num">4×</td><td>12 mm</td></tr>
+<tr><td>🏛️ Ruinen</td><td class="mat-num">5×</td><td>10 mm</td></tr>
+<tr><td>〰️ Fluss</td><td class="mat-num">4×</td><td>5 mm</td></tr>
+</table>
+
+<div class="mat-cat">GEBÄUDE — JE FRAKTION (×6 FARBEN)</div>
+<table class="mat-table">
+<tr><th>Gebäude</th><th>Gesamt</th><th>Höhe</th></tr>
+<tr><td>🏘 Siedlung</td><td class="mat-num">24×</td><td>20 mm</td></tr>
+<tr><td>🏙 Stadt</td><td class="mat-num">18×</td><td>30 mm</td></tr>
+<tr><td>🏰 Festung</td><td class="mat-num">12×</td><td>35 mm</td></tr>
+<tr><td>⛺ Lager (Wildklinge)</td><td class="mat-num">4×</td><td>15 mm</td></tr>
+<tr><td>🗼 Aether-Turm (Nebelwacht)</td><td class="mat-num">3×</td><td>40 mm</td></tr>
+</table>
+
+<div class="mat-cat">EINHEITEN & MARKER</div>
+<table class="mat-table">
+<tr><th>Element</th><th>Anzahl</th></tr>
+<tr><td>⚔ Krieger-Token</td><td class="mat-num">36×</td></tr>
+<tr><td>🎖 Siegpunkt-Marker</td><td class="mat-num">30× / Frak.</td></tr>
+<tr><td>🌡 Weltlage-Track</td><td class="mat-num">1×</td></tr>
+<tr><td>🎲 Würfelbox</td><td class="mat-num">6×</td></tr>
+<tr><td>🃏 Kartenhalter</td><td class="mat-num">6×</td></tr>
+</table>
+
+<div class="mat-cat">WÜRFEL & KARTEN (nicht gedruckt)</div>
+<table class="mat-table">
+<tr><th>Element</th><th>Anzahl</th></tr>
+<tr><td>Sechsseitige Würfel (W6)</td><td class="mat-num">2×</td></tr>
+<tr><td>Achtseitige Würfel (W8)</td><td class="mat-num">2×</td></tr>
+<tr><td>Ereigniskarten</td><td class="mat-num">60×</td></tr>
+<tr><td>Fraktionskarten</td><td class="mat-num">36×</td></tr>
+<tr><td>Geheimziel-Karten</td><td class="mat-num">6×</td></tr>
+</table>
+
+<div class="callout">
+<div class="callout-title">FILAMENT — 4 FARBEN</div>
+<p><strong>Farbe 1 Braun:</strong> Böden & Basen · <strong>Farbe 2 Grün:</strong> Natur · <strong>Farbe 3 Grau:</strong> Stein & Gebäude · <strong>Farbe 4 Petrol/Violett:</strong> Wasser & Aether (Glow-Filament empfohlen für Aetherwunden).</p>
+</div>
+`;
 
 </script>
 </body>

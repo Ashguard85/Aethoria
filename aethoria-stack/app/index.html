@@ -1906,7 +1906,7 @@ async function callWorld() {
   const err = document.getElementById('errBox');
   err.style.display = 'none';
 
-  // Gather input
+  // ── Input sammeln ──
   const activeTab = document.querySelector('.itab.active').textContent.trim();
   let textVal = '', imgData = null;
   if (activeTab.includes('Text')) {
@@ -1923,42 +1923,49 @@ async function callWorld() {
     return;
   }
 
-  const hint = document.getElementById('eventHint').value;
-  const prompt = buildPrompt(textVal, !!imgData, hint);
+  // ── Verbindung prüfen ──
+  if (!G.connected && G.apiMode !== 'api') {
+    err.textContent = '⚠ Nicht verbunden — bitte zuerst auf "Verbinden" klicken.';
+    err.style.display = 'block';
+    return;
+  }
 
-  // Show loading
+  const hint    = document.getElementById('eventHint').value;
+  const prompt  = buildPrompt(textVal, !!imgData, hint);
+  const logTime = new Date().toLocaleTimeString('de-CH');
+
+  // ── Loading anzeigen ──
   const feed = document.getElementById('worldFeed');
+  if (feed.querySelector('.empty-feed')) feed.innerHTML = '';
   const loading = document.createElement('div');
   loading.className = 'event-loading';
   loading.innerHTML = `<div class="rune-spin"></div><div class="loading-txt">Die Welt verarbeitet<span class="loading-dots"></span></div>`;
-  if (feed.querySelector('.empty-feed')) feed.innerHTML = '';
   feed.prepend(loading);
   btn.disabled = true;
 
+  // ── Log-Eintrag: Input ──
+  addLogEntry('input', logTime, textVal || '[Foto]', hint);
+
   try {
-    let response;
-    if (G.connected) {
-      response = await ollamaGenerate(prompt, imgData);
-    } else {
-      await new Promise(r=>setTimeout(r,1400+Math.random()*600));
-      response = demoResponse(hint);
-    }
+    const response = await ollamaGenerate(prompt, imgData);
     loading.remove();
+
+    // ── Log-Eintrag: Output ──
+    addLogEntry('output', logTime, response, null);
+
     addEvent(response, hint || detectType(response));
 
-    // mood progression
     if (G.events.length % 3 === 0 && G.moodIdx < 5) G.moodIdx++;
-    // Healing events nudge mood up
     if (response.toLowerCase().includes('erholt') || response.toLowerCase().includes('blüh')) {
       if (G.moodIdx > 0) G.moodIdx--;
     }
     updateHUD();
-
-    // Clear inputs
-    document.getElementById('txtInput').value = '';
+    document.getElementById('txtInput').value  = '';
     document.getElementById('txtInput2').value = '';
+
   } catch(e) {
     loading.remove();
+    addLogEntry('error', logTime, e.message, null);
     const prov = getProvider();
     err.textContent = prov === 'openai'
       ? `OpenAI Fehler: ${e.message}`
@@ -1966,6 +1973,56 @@ async function callWorld() {
     err.style.display = 'block';
   }
   btn.disabled = false;
+}
+
+// ── LOG SYSTEM ──
+let _logOpen = false;
+function addLogEntry(type, time, text, hint) {
+  let log = document.getElementById('promptLog');
+  if (!log) {
+    // Log-Panel erstellen (unter dem Feed)
+    const feed = document.getElementById('worldFeed');
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'margin-top:1.5rem';
+    wrap.innerHTML = `
+      <div style="font-family:'IM Fell English SC',serif;font-size:0.75rem;letter-spacing:0.25em;color:var(--gold2);margin-bottom:0.75rem;display:flex;align-items:center;gap:0.75rem;cursor:pointer" onclick="toggleLog()">
+        🔍 Prompt-Log
+        <span id="logToggle" style="font-size:0.65rem;color:var(--vellum4)">[aufklappen]</span>
+        <span style="flex:1;height:1px;background:linear-gradient(to right,rgba(200,144,48,0.35),transparent)"></span>
+      </div>
+      <div id="promptLog" style="display:none;flex-direction:column;gap:0.5rem"></div>`;
+    feed.after(wrap);
+    log = document.getElementById('promptLog');
+  }
+
+  const colors = { input:'var(--teal2)', output:'var(--gold2)', error:'var(--blood2)' };
+  const labels = { input:'📥 INPUT', output:'📤 OUTPUT', error:'❌ FEHLER' };
+  const preview = text.length > 300 ? text.slice(0,300)+'…' : text;
+  const full    = text;
+  const id      = 'log-' + Date.now();
+
+  const el = document.createElement('div');
+  el.style.cssText = `background:rgba(18,14,8,0.8);border:1px solid rgba(200,144,48,0.12);border-left:3px solid ${colors[type]};border-radius:4px;padding:0.6rem 0.9rem;font-size:0.72rem`;
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:0.35rem">
+      <span style="font-family:'JetBrains Mono',monospace;color:${colors[type]}">${labels[type]}${hint ? ' · '+hint : ''}</span>
+      <span style="color:var(--vellum4);font-family:'JetBrains Mono',monospace">${time}</span>
+    </div>
+    <div id="${id}-short" style="color:var(--vellum3);line-height:1.5;white-space:pre-wrap;cursor:pointer" onclick="document.getElementById('${id}-short').style.display='none';document.getElementById('${id}-full').style.display='block'">${preview}${text.length>300?'<span style="color:var(--gold2)"> [mehr]</span>':''}</div>
+    <div id="${id}-full"  style="color:var(--vellum3);line-height:1.5;white-space:pre-wrap;display:none">${full}</div>`;
+  log.prepend(el);
+
+  // Auto-öffnen beim ersten Output
+  if (type === 'output' && !_logOpen) toggleLog();
+}
+
+function toggleLog() {
+  const log    = document.getElementById('promptLog');
+  const toggle = document.getElementById('logToggle');
+  if (!log) return;
+  _logOpen = !_logOpen;
+  log.style.display    = _logOpen ? 'flex' : 'none';
+  if (toggle) toggle.textContent = _logOpen ? '[einklappen]' : '[aufklappen]';
 }
 
 function detectType(txt) {

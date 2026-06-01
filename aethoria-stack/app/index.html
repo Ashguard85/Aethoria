@@ -583,7 +583,66 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
 ::-webkit-scrollbar-track { background:rgba(18,14,8,0.5); }
 ::-webkit-scrollbar-thumb { background:rgba(200,144,48,0.25); border-radius:3px; }
 
-/* ═══ RESPONSIVE ═══ */
+/* ═══ SESSION BAR ═══ */
+.session-bar {
+  background: rgba(18,14,8,0.75);
+  border: 1px solid rgba(200,144,48,0.2);
+  border-radius: 5px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.8rem;
+}
+.sess-current {
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.sess-name {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 0.85rem; color: var(--vellum);
+  flex: 1; min-width: 140px;
+}
+.sess-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem; color: var(--vellum4);
+}
+.sess-btn {
+  background: rgba(200,144,48,0.1);
+  border: 1px solid rgba(200,144,48,0.3);
+  color: var(--gold); padding: 0.2rem 0.65rem;
+  border-radius: 3px; cursor: pointer;
+  font-family: 'IM Fell English', serif; font-size: 0.75rem;
+  transition: all 0.15s; white-space: nowrap;
+}
+.sess-btn:hover { background: rgba(200,144,48,0.25); }
+.sess-btn.warn { border-color: rgba(168,32,32,0.4); color: #e88; }
+.sess-btn.warn:hover { background: rgba(168,32,32,0.15); }
+.sess-list {
+  display: flex; flex-direction: column; gap: 0.4rem;
+  border-top: 1px solid rgba(200,144,48,0.1);
+  padding-top: 0.5rem; margin-top: 0.25rem;
+}
+.sess-item {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.4rem 0.6rem; border-radius: 3px;
+  background: rgba(242,232,204,0.03);
+  border: 1px solid rgba(200,144,48,0.1);
+}
+.sess-item.active { border-color: rgba(200,144,48,0.35); background: rgba(200,144,48,0.06); }
+.sess-item-info { flex: 1; min-width: 0; }
+.sess-item-name {
+  font-family: 'IM Fell English SC', serif;
+  font-size: 0.8rem; color: var(--vellum);
+  display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sess-item-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--vellum4); }
+.sess-item-btns { display: flex; gap: 0.35rem; }
+.sess-active-badge {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  color: var(--gold); padding: 0.15rem 0.5rem;
+  border: 1px solid rgba(200,144,48,0.3); border-radius: 2px;
+}
+.sess-import { margin-top: 0.5rem; border-top: 1px solid rgba(200,144,48,0.1); padding-top: 0.5rem; }
+</style>
 @media (max-width:500px) {
   .players-setup { grid-template-columns:1fr; }
   .psetup-row select { display:none; }
@@ -804,6 +863,7 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
       <label>Modell</label>
       <input id="ollamaModel" value="__OLLAMA_MODEL__" type="text" style="width:100px">
       <button class="btn-connect" onclick="connectOllama()">Verbinden</button>
+      <span id="apiModeBadge" style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;padding:0.2rem 0.5rem;border-radius:3px;border:1px solid;opacity:0.8"></span>
     </div>
   </div>
 
@@ -882,6 +942,11 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
         <div class="state-label">Szenario</div>
         <div class="state-val sm" id="dispScenario">Standard</div>
       </div>
+    </div>
+
+    <!-- Session Bar -->
+    <div class="session-bar" id="sessionBar">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--vellum4)">Lade Sessions…</span>
     </div>
 
     <!-- Players -->
@@ -1028,6 +1093,12 @@ const G = {
   imgData2: null,
   gameName: 'Aethoria',
   scenario: 'Standard',
+  // ── SESSION / KONVERSATION ──
+  sessionId: null,          // UUID der aktuellen Kampagne
+  conversation: [],         // [{role:'user'|'assistant', content:'...'}] — voller Verlauf
+  sessionName: '',          // Anzeigename der Kampagne
+  apiMode: '__ENABLE_API__' === 'true' ? 'api' : 'local',
+  apiBase: '__API_URL__',
 };
 
 const MOODS = ['Blühend','Stabil','Angespannt','Unruhig','Krisenhaft','Chaotisch'];
@@ -1082,6 +1153,21 @@ function buildPlayerRows() {
 }
 buildPlayerRows();
 
+// Zeige API-Modus Badge
+(function(){
+  const badge = document.getElementById('apiModeBadge');
+  if (!badge) return;
+  if (G.apiMode === 'api') {
+    badge.textContent = '🗄 SQLite-Modus';
+    badge.style.color = '#4caf50';
+    badge.style.borderColor = '#4caf50';
+  } else {
+    badge.textContent = '💾 Browser-Modus';
+    badge.style.color = 'var(--storm2)';
+    badge.style.borderColor = 'rgba(106,136,152,0.4)';
+  }
+})();
+
 function startGame() {
   const n = +document.getElementById('playerCount').value;
   G.totalRounds = +document.getElementById('totalRounds').value;
@@ -1106,6 +1192,8 @@ function startGame() {
   updateHUD();
   renderPlayers();
   setTimeout(() => { initMap(); updateMapLegend(); }, 60);
+  // Neue Konversations-Session starten
+  startSession();
 }
 
 // ══════════════════════════════
@@ -1200,24 +1288,290 @@ async function connectOllama() {
   }
 }
 
-async function ollamaGenerate(prompt, imgBase64) {
-  const url   = document.getElementById('ollamaUrl').value.trim();
-  const model = document.getElementById('ollamaModel').value.trim() || 'llava';
-  const body  = { model, prompt, stream:false };
-  if (imgBase64) body.images = [imgBase64.split(',')[1]];
-  const r = await fetch(`${url}/api/generate`, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(90000),
-  });
-  if (!r.ok) throw new Error('Ollama HTTP '+r.status);
-  return (await r.json()).response || '';
+// ══════════════════════════════
+//  CONVERSATION ENGINE
+//  Ansatz A: Browser-Memory (aktiv)
+//  Ansatz B: SQLite API (nachrüstbar via G.apiMode = 'api')
+// ══════════════════════════════
+
+function sessionUUID() {
+  return 'sess-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7);
 }
 
-// ══════════════════════════════
-//  BUILD PROMPT
-// ══════════════════════════════
+// Startet eine neue Konversations-Session
+function startSession() {
+  G.sessionId   = sessionUUID();
+  G.sessionName = `${G.gameName} — ${new Date().toLocaleDateString('de-CH')}`;
+  G.conversation = [];
+  // System-Kontext: einmalig am Anfang injiziert
+  G.conversation.push({
+    role: 'system',
+    content: buildSystemPrompt()
+  });
+  saveSessionLocal();
+  renderSessionBar();
+}
+
+// System-Prompt: einmalig, definiert die Welt-Persona
+function buildSystemPrompt() {
+  const playerList = G.players.map(p=>`${p.name} (${p.fac.name})`).join(', ');
+  const hasGrau = G.players.some(p=>p.fac.id==='grauasche');
+  return `Du bist die WELTMASCHINE des Brettspiels AETHORIA — Das Erbe der zerstörten Welt.
+Du spielst die lebendige Welt selbst: Wirtschaft, Wetter, Natur, Gesellschaft, Unfälle, politische Lage, Aether-Energie.
+Du bist KEIN einzelner Gegner — du bist das Weltgeschehen das auf Spielerhandlungen reagiert.
+
+KAMPAGNE: ${G.gameName}
+SZENARIO: ${G.scenario}
+SPIELER: ${playerList}
+GESAMTRUNDEN: ${G.totalRounds}
+${hasGrau ? 'WICHTIG: Die Grauasche ist im Spiel — sie verfolgt das Ziel den Kaelthas-Turm zu reaktivieren. Beziehe das subtil ein.' : ''}
+
+WELT-KONTEXT:
+Der Kontinent Aethoria wurde vor 300 Jahren durch einen Magikerunfall (Kaelthas-Turm) zerstört. Aetherwunden (glühende Risse) durchziehen das Land. Sechs Fraktionen kämpfen um Städte, Festungen, Gebiete und Ressourcen.
+
+SPIELFELD: Halb-modulares Hex-Brett. Jede Fraktion hat ein festes 3er-Pyramiden-Heimatgebiet am Rand. Die Mitte (Ruinen ×2 SP, Flüsse) wird zufällig gefüllt.
+
+ANTWORTFORMAT (immer einhalten):
+1. Ein atmosphärischer Erzähltext (3-4 Sätze, Deutsch, packend).
+2. Dann genau 2-4 Spieleffekte im Format "EFFEKT: [konkrete Anweisung]".
+Kein Präambel, kein Nachtext. Nur Erzählung + EFFEKTs.
+
+WICHTIG: Du erinnerst dich an ALLE vorherigen Runden dieser Kampagne. Baue die Weltereignisse aufeinander auf. Wenn in Runde 2 Wälder gerodet wurden, kann in Runde 4 ein Feuer ausbrechen. Wenn eine Fraktion immer aggressiver wird, sollte die Welt entsprechend eskalieren. Lass die Konsequenzen früherer Aktionen spürbar werden.`;
+}
+
+// Sendet eine Runde an Ollama und erhält Antwort im Konversationskontext
+async function ollamaGenerate(userPrompt, imgBase64) {
+  const url   = document.getElementById('ollamaUrl').value.trim();
+  const model = document.getElementById('ollamaModel').value.trim() || 'llava';
+
+  // User-Nachricht zum Verlauf hinzufügen
+  const userMsg = { role: 'user', content: userPrompt };
+  if (imgBase64) userMsg.images = [imgBase64.split(',')[1]];
+  G.conversation.push(userMsg);
+
+  // Phase B: Backend-API wenn aktiv
+  if (G.apiMode === 'api') {
+    return await ollamaViaBackend(userPrompt, imgBase64);
+  }
+
+  // Phase A: Direkt zu Ollama mit vollem Konversationsverlauf
+  // Ollama /api/chat unterstützt messages-Array (wie OpenAI)
+  const messages = G.conversation.map(m => {
+    const msg = { role: m.role === 'system' ? 'system' : m.role, content: m.content };
+    if (m.images) msg.images = m.images;
+    return msg;
+  });
+
+  let responseText = '';
+
+  try {
+    // Versuch 1: /api/chat (Ollama ≥ 0.1.14, unterstützt Kontext)
+    const r = await fetch(`${url}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, messages, stream: false }),
+      signal: AbortSignal.timeout(90000),
+    });
+    if (r.ok) {
+      const d = await r.json();
+      responseText = d.message?.content || d.response || '';
+    } else {
+      throw new Error('chat not available');
+    }
+  } catch(e) {
+    // Fallback: /api/generate mit manuellem Kontext-Prefix
+    const contextPrefix = G.conversation
+      .filter(m => m.role !== 'system')
+      .slice(-6)  // letzte 3 Runden (user+assistant je)
+      .map(m => (m.role === 'user' ? '### SPIELER:\n' : '### WELT:\n') + m.content)
+      .join('\n\n');
+    const fullPrompt = buildSystemPrompt() + '\n\n' + contextPrefix + '\n\n### SPIELER:\n' + userPrompt;
+    const body = { model, prompt: fullPrompt, stream: false };
+    if (imgBase64) body.images = [imgBase64.split(',')[1]];
+    const r2 = await fetch(`${url}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(90000),
+    });
+    if (!r2.ok) throw new Error('Ollama HTTP ' + r2.status);
+    responseText = (await r2.json()).response || '';
+  }
+
+  // Antwort zum Verlauf hinzufügen
+  G.conversation.push({ role: 'assistant', content: responseText });
+  saveSessionLocal();
+  return responseText;
+}
+
+// Phase B Stub — wird durch Backend ersetzt
+async function ollamaViaBackend(userPrompt, imgBase64) {
+  const r = await fetch(`${G.apiBase}/session/${G.sessionId}/message`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      prompt: userPrompt,
+      image: imgBase64 ? imgBase64.split(',')[1] : null,
+      round: G.round,
+      mood: MOODS[G.moodIdx],
+      players: G.players.map(p => ({ name: p.name, faction: p.fac.name, pts: p.pts })),
+    }),
+    signal: AbortSignal.timeout(90000),
+  });
+  if (!r.ok) throw new Error('Backend HTTP ' + r.status);
+  const d = await r.json();
+  G.conversation = d.conversation; // Backend gibt aktualisierten Verlauf zurück
+  return d.response;
+}
+
+// ── SESSION PERSISTENCE (Phase A: localStorage) ──
+const SESSION_KEY = 'aethoria_sessions';
+
+function saveSessionLocal() {
+  if (!G.sessionId) return;
+  try {
+    const all = loadAllSessions();
+    all[G.sessionId] = {
+      id:           G.sessionId,
+      name:         G.sessionName,
+      gameName:     G.gameName,
+      scenario:     G.scenario,
+      round:        G.round,
+      totalRounds:  G.totalRounds,
+      moodIdx:      G.moodIdx,
+      players:      G.players.map(p=>({ name:p.name, facId:p.fac.id, pts:p.pts })),
+      events:       G.events,
+      conversation: G.conversation,
+      savedAt:      Date.now(),
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(all));
+    renderSessionBar();
+  } catch(e) { console.warn('Session save failed:', e); }
+}
+
+function loadAllSessions() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+
+function loadSession(id) {
+  const all = loadAllSessions();
+  const s = all[id];
+  if (!s) return;
+  G.sessionId   = s.id;
+  G.sessionName = s.name;
+  G.gameName    = s.gameName;
+  G.scenario    = s.scenario;
+  G.round       = s.round;
+  G.totalRounds = s.totalRounds;
+  G.moodIdx     = s.moodIdx;
+  G.events      = s.events || [];
+  G.conversation= s.conversation || [];
+  // Spieler-Objekte rekonstruieren
+  G.players = (s.players||[]).map(p => {
+    const fac = FACTIONS.find(f=>f.id===p.facId) || FACTIONS[0];
+    return { name:p.name, fac, pts:p.pts };
+  });
+  // UI aufbauen
+  document.getElementById('setupPanel').style.display  = 'none';
+  document.getElementById('gameScreen').style.display  = 'block';
+  // Feed wiederherstellen
+  const feed = document.getElementById('worldFeed');
+  feed.innerHTML = '';
+  G.events.forEach(e => {
+    const el = document.createElement('div');
+    el.className = `event-card ${e.type||''}`;
+    el.innerHTML = `<div class="event-head"><span class="event-type-tag">${e.tag||'🌍 Weltgeschehen'}</span><span class="event-meta">Runde ${e.round}</span></div><div class="event-body">${e.narrative||e.summary}</div>${(e.effects||[]).length?'<div class="event-effects">'+e.effects.map(x=>`<span class="effect-chip">⟶ ${x}</span>`).join('')+'</div>':''}`;
+    feed.appendChild(el);
+  });
+  updateHUD();
+  renderPlayers();
+  setTimeout(()=>{ initMap(); updateMapLegend(); }, 60);
+  renderSessionBar();
+  document.getElementById('panel-spiel').scrollIntoView({ behavior:'smooth' });
+}
+
+function deleteSession(id) {
+  const all = loadAllSessions();
+  const name = all[id]?.name || id;
+  if (!confirm(`Kampagne "${name}" wirklich löschen?`)) return;
+  delete all[id];
+  localStorage.setItem(SESSION_KEY, JSON.stringify(all));
+  renderSessionBar();
+}
+
+function exportSession() {
+  if (!G.sessionId) return;
+  const all = loadAllSessions();
+  const s = all[G.sessionId];
+  if (!s) return;
+  const blob = new Blob([JSON.stringify(s, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `aethoria-${G.sessionId}.json`;
+  a.click();
+}
+
+function importSession(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const s = JSON.parse(e.target.result);
+      if (!s.id || !s.conversation) throw new Error('Ungültiges Format');
+      const all = loadAllSessions();
+      all[s.id] = s;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(all));
+      renderSessionBar();
+      if (confirm(`Kampagne "${s.name}" importiert. Jetzt laden?`)) loadSession(s.id);
+    } catch(err) { alert('Fehler beim Import: ' + err.message); }
+  };
+  reader.readAsText(file);
+}
+
+// ── SESSION BAR UI ──
+function renderSessionBar() {
+  const bar = document.getElementById('sessionBar');
+  if (!bar) return;
+  const all = loadAllSessions();
+  const sessions = Object.values(all).sort((a,b) => b.savedAt - a.savedAt);
+  const contextLen = G.conversation.filter(m=>m.role!=='system').length;
+  const tokenEst = G.conversation.reduce((acc,m)=>acc+(m.content?.length||0),0);
+
+  let html = `<div class="sess-current">`;
+  if (G.sessionId) {
+    html += `<span class="sess-name">📖 ${G.sessionName}</span>`;
+    html += `<span class="sess-meta">${contextLen} Nachrichten · ~${Math.round(tokenEst/4)} Tokens</span>`;
+    html += `<button class="sess-btn" onclick="exportSession()">⬇ Export</button>`;
+    html += `<button class="sess-btn warn" onclick="startSession()">↺ Neue Session</button>`;
+  } else {
+    html += `<span class="sess-meta" style="color:var(--vellum4);font-style:italic">Keine aktive Session</span>`;
+  }
+  html += `</div>`;
+
+  if (sessions.length > 0) {
+    html += `<div class="sess-list">`;
+    sessions.slice(0,5).forEach(s => {
+      const active = s.id === G.sessionId;
+      const date = new Date(s.savedAt).toLocaleDateString('de-CH');
+      html += `<div class="sess-item ${active?'active':''}">
+        <div class="sess-item-info">
+          <span class="sess-item-name">${s.name}</span>
+          <span class="sess-item-meta">Runde ${s.round}/${s.totalRounds} · ${s.players?.length||0} Spieler · ${date}</span>
+        </div>
+        <div class="sess-item-btns">
+          ${!active ? `<button class="sess-btn" onclick="loadSession('${s.id}')">Laden</button>` : '<span class="sess-active-badge">aktiv</span>'}
+          <button class="sess-btn warn" onclick="deleteSession('${s.id}')">✕</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="sess-import"><label class="sess-btn" for="importFile">⬆ JSON importieren</label><input type="file" id="importFile" accept=".json" style="display:none" onchange="importSession(this.files[0])"></div>`;
+  bar.innerHTML = html;
+}
+
+
 function buildPrompt(textVal, imgPresent, hint) {
   const playerList = G.players.map(p=>`${p.name} (${p.fac.name}, ${p.pts} SP)`).join(', ');
   const activeName = G.players[G.activePlayer]?.name || 'Unbekannt';
@@ -1425,23 +1779,29 @@ function addEvent(raw, type) {
   const lines = raw.split('\n').filter(l=>l.trim());
   const narrative = lines.filter(l=>!l.startsWith('EFFEKT:')).join(' ').trim();
   const effects = lines.filter(l=>l.startsWith('EFFEKT:')).map(l=>l.replace('EFFEKT:','').trim());
+  const tag = TYPE_TAGS[type] || '\U0001f30d Weltgeschehen';
 
-  G.events.push({ summary: narrative.slice(0,90)+'…', type, round:G.round });
+  // Vollst\u00e4ndige Daten f\u00fcr Session-Restore speichern
+  G.events.push({
+    summary:   narrative.slice(0,90)+'\u2026',
+    narrative, effects, type, tag,
+    round:     G.round,
+    player:    G.players[G.activePlayer]?.name || '?',
+  });
   document.getElementById('dispEvents').textContent = G.events.length;
+  saveSessionLocal();
 
-  const tag = TYPE_TAGS[type] || '🌍 Weltgeschehen';
   const el = document.createElement('div');
   el.className = `event-card ${type}`;
   el.innerHTML = `
     <div class="event-head">
       <span class="event-type-tag">${tag}</span>
-      <span class="event-meta">Runde ${G.round} · ${G.players[G.activePlayer]?.name||'?'}</span>
+      <span class="event-meta">Runde ${G.round} \u00b7 ${G.players[G.activePlayer]?.name||'?'}</span>
     </div>
     <div class="event-body">${narrative || raw}</div>
-    ${effects.length ? `<div class="event-effects">${effects.map(e=>`<span class="effect-chip">⟶ ${e}</span>`).join('')}</div>` : ''}`;
+    ${effects.length ? `<div class="event-effects">${effects.map(e=>`<span class="effect-chip">\u27b6 ${e}</span>`).join('')}</div>` : ''}`;
   document.getElementById('worldFeed').prepend(el);
 }
-
 // ══════════════════════════════
 //  HEX MAP ENGINE
 // ══════════════════════════════

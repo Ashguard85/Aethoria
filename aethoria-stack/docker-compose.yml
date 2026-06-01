@@ -1,27 +1,62 @@
 version: "3.8"
 
-# ═══════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════
 #  AETHORIA — Companion App Stack
-#  Ollama läuft auf dem Host mit OLLAMA_ORIGINS=*
+#
+#  Phase A (Standard): Nur aethoria-companion
+#  Phase B (Kampagnen-Modus): + aethoria-api aktivieren
 #
 #  Portainer Environment Variables:
-#    APP_PORT     → Web-App Port   (default: 8080)
-#    OLLAMA_URL   → Ollama URL     (default: http://host.docker.internal:11434)
-#    OLLAMA_MODEL → Modell         (default: llama3.1:8b)
-# ═══════════════════════════════════════════════
+#    APP_PORT      → Web-App Port       (default: 8080)
+#    API_PORT      → Backend API Port   (default: 8001)
+#    OLLAMA_URL    → Ollama auf dem Host
+#    OLLAMA_MODEL  → Modell
+#    ENABLE_API    → "true" aktiviert Phase B (default: false)
+# ═══════════════════════════════════════════════════════
 
 services:
+
+  # ── Phase A: Frontend App ──
   aethoria-companion:
     build:
       context: https://github.com/DEIN-USER/aethoria-stack.git#main
       dockerfile: Dockerfile
       no_cache: false
     container_name: aethoria-companion
+    restart: unless-stopped
     ports:
       - "${APP_PORT:-8080}:80"
     environment:
       - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
+      - ENABLE_API=${ENABLE_API:-false}
+      - API_URL=http://aethoria-api:8001
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      - aethoria-api
+
+  # ── Phase B: Session API (SQLite) ──
+  # Standardmässig aktiv aber im App deaktiviert (ENABLE_API=false)
+  # Zum Aktivieren: ENABLE_API=true in Portainer setzen
+  aethoria-api:
+    build:
+      context: https://github.com/DEIN-USER/aethoria-stack.git#main
+      dockerfile: api/Dockerfile
+      no_cache: false
+    container_name: aethoria-api
     restart: unless-stopped
+    ports:
+      - "${API_PORT:-8001}:8001"
+    environment:
+      - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
+      - DB_PATH=/data/aethoria.db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - aethoria-db:/data
+
+volumes:
+  aethoria-db:
+    # SQLite-Datei bleibt auch nach Container-Neustart erhalten

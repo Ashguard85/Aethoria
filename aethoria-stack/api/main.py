@@ -70,6 +70,8 @@ class MessageRequest(BaseModel):
     round: Optional[int] = 1
     mood: Optional[str] = 'Stabil'
     players: Optional[list] = []
+    model: Optional[str] = None        # überschreibt OLLAMA_MODEL / OPENAI_MODEL
+    openai_key: Optional[str] = None   # wenn gesetzt → OpenAI statt Ollama
 
 class SessionUpdate(BaseModel):
     round: Optional[int] = None
@@ -100,15 +102,15 @@ def session_dict(row, msgs=None):
 
 OPENAI_KEY = os.getenv('OPENAI_API_KEY', '')
 
-async def call_ai(messages, openai_key=''):
+async def call_ai(messages, openai_key='', model_override=None):
     """Ollama lokal oder OpenAI Cloud — je nach Konfiguration."""
     key = openai_key or OPENAI_KEY
     if key:
-        return await call_openai(messages, key)
-    return await call_ollama(messages)
+        return await call_openai(messages, key, model_override)
+    return await call_ollama(messages, model_override)
 
-async def call_openai(messages, key):
-    model = os.getenv('OPENAI_MODEL', 'gpt-4o')
+async def call_openai(messages, key, model_override=None):
+    model = model_override or os.getenv('OPENAI_MODEL', 'gpt-4o')
     async with httpx.AsyncClient(timeout=300) as client:
         r = await client.post('https://api.openai.com/v1/chat/completions',
             headers={'Authorization': f'Bearer {key}'},
@@ -116,11 +118,11 @@ async def call_openai(messages, key):
         r.raise_for_status()
         return r.json()['choices'][0]['message']['content']
 
-async def call_ollama(messages):
+async def call_ollama(messages, model_override=None):
     async with httpx.AsyncClient(timeout=300) as client:
         try:
             r = await client.post(f'{OLLAMA_URL}/api/chat',
-                json={'model': OLLAMA_MODEL, 'messages': messages, 'stream': False})
+                json={'model': model_override or OLLAMA_MODEL, 'messages': messages, 'stream': False})
             if r.status_code == 200:
                 return r.json()['message']['content']
         except Exception:
@@ -131,7 +133,7 @@ async def call_ollama(messages):
             ('### SPIELER:\n' if m['role']=='user' else '### WELT:\n') + m['content']
             for m in messages if m['role'] != 'system'
         )
-        body = {'model': OLLAMA_MODEL, 'prompt': sys + '\n\n' + ctx, 'stream': False}
+        body = {'model': model_override or OLLAMA_MODEL, 'prompt': sys + '\n\n' + ctx, 'stream': False}
         last = next((m for m in reversed(messages) if m['role']=='user'), None)
         if last and last.get('images'):
             body['images'] = last['images']
@@ -238,7 +240,7 @@ async def send_message(sid: str, data: MessageRequest):
     user_msg = {'role': 'user', 'content': user_content}
     if data.image: user_msg['images'] = [data.image]
     try:
-        response = await call_ollama(conversation + [user_msg])
+        response = await call_ai(conversation + [user_msg], data.openai_key or '', data.model)
     except Exception as e:
         raise HTTPException(502, f'Ollama Fehler: {e}')
 

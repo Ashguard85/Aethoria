@@ -1597,21 +1597,31 @@ async function ollamaGenerate(userPrompt, imgBase64) {
 
 // Phase B Stub — wird durch Backend ersetzt
 async function ollamaViaBackend(userPrompt, imgBase64) {
+  const provider = getProvider();
+  const model = provider === 'openai'
+    ? document.getElementById('openaiModel').value
+    : document.getElementById('ollamaModel').value.trim();
+  const openaiKey = provider === 'openai'
+    ? document.getElementById('openaiKey').value.trim()
+    : '';
+
   const r = await fetch(`${G.apiBase}/session/${G.sessionId}/message`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      prompt: userPrompt,
-      image: imgBase64 ? imgBase64.split(',')[1] : null,
-      round: G.round,
-      mood: MOODS[G.moodIdx],
-      players: G.players.map(p => ({ name: p.name, faction: p.fac.name, pts: p.pts })),
+      prompt:     userPrompt,
+      image:      imgBase64 ? imgBase64.split(',')[1] : null,
+      round:      G.round,
+      mood:       MOODS[G.moodIdx],
+      players:    G.players.map(p => ({ name: p.name, faction: p.fac.name, pts: p.pts })),
+      model:      model,       // ← aus App-UI übernehmen
+      openai_key: openaiKey,   // ← leer wenn Ollama
     }),
     signal: AbortSignal.timeout(getTimeoutMs()),
   });
   if (!r.ok) throw new Error('Backend HTTP ' + r.status);
   const d = await r.json();
-  G.conversation = d.conversation; // Backend gibt aktualisierten Verlauf zurück
+  G.conversation = d.conversation;
   return d.response;
 }
 

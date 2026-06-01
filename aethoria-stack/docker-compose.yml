@@ -51,7 +51,9 @@ services:
     environment:
       - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
-      - DB_PATH=/data/aethoria.db
+      - DB_PATH=${DB_PATH:-/data/aethoria.db}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

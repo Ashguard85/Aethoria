@@ -853,19 +853,42 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
     <div class="logo-sub">Weltmaschine · Companion</div>
   </header>
 
-  <!-- ═══ OLLAMA ═══ -->
+  <!-- ═══ KI-PROVIDER ═══ -->
   <div class="ollama-bar">
     <div class="status-orb" id="orb"></div>
-    <div class="ollama-status" id="ollamaStatus">Nicht verbunden — Ollama konfigurieren</div>
+    <div class="ollama-status" id="ollamaStatus">Nicht verbunden</div>
     <div class="ollama-fields">
-      <label>URL</label>
-      <input id="ollamaUrl" value="__OLLAMA_URL__" placeholder="/ollama" type="text">
-      <label>Modell</label>
-      <input id="ollamaModel" value="__OLLAMA_MODEL__" type="text" style="width:100px">
+      <label>Provider</label>
+      <select id="aiProvider" onchange="onProviderChange()" style="width:110px">
+        <option value="ollama">🦙 Ollama</option>
+        <option value="openai">✦ ChatGPT</option>
+      </select>
+
+      <!-- Ollama-Felder -->
+      <span id="ollamaFields" style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap">
+        <label>URL</label>
+        <input id="ollamaUrl" value="__OLLAMA_URL__" type="text" style="width:160px">
+        <label>Modell</label>
+        <input id="ollamaModel" value="__OLLAMA_MODEL__" type="text" style="width:110px">
+      </span>
+
+      <!-- OpenAI-Felder (versteckt by default) -->
+      <span id="openaiFields" style="display:none;align-items:center;gap:0.4rem;flex-wrap:wrap">
+        <label>API Key</label>
+        <input id="openaiKey" type="password" placeholder="sk-..." style="width:180px">
+        <label>Modell</label>
+        <select id="openaiModel" style="width:120px">
+          <option value="gpt-4o">gpt-4o</option>
+          <option value="gpt-4o-mini">gpt-4o-mini</option>
+          <option value="gpt-4-turbo">gpt-4-turbo</option>
+          <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+        </select>
+      </span>
+
       <label>Timeout</label>
-      <input id="ollamaTimeout" value="300" type="number" min="30" max="600" style="width:60px" title="Sekunden">
+      <input id="ollamaTimeout" value="300" type="number" min="30" max="600" style="width:55px">
       <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--vellum4)">s</span>
-      <button class="btn-connect" onclick="connectOllama()">Verbinden</button>
+      <button class="btn-connect" onclick="connectAI()">Verbinden</button>
       <span id="apiModeBadge" style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;padding:0.2rem 0.5rem;border-radius:3px;border:1px solid;opacity:0.8"></span>
     </div>
   </div>
@@ -1274,39 +1297,176 @@ function loadImg(evt, previewId, stateKey) {
 }
 
 // ══════════════════════════════
-//  OLLAMA
+//  AI PROVIDER ENGINE
+//  Ollama (lokal) oder OpenAI/ChatGPT (Cloud)
 // ══════════════════════════════
+
+function getProvider() {
+  return document.getElementById('aiProvider')?.value || 'ollama';
+}
+
+function onProviderChange() {
+  const p = getProvider();
+  document.getElementById('ollamaFields').style.display = p === 'ollama' ? 'flex' : 'none';
+  document.getElementById('openaiFields').style.display = p === 'openai' ? 'flex' : 'none';
+  G.connected = false;
+  const orb = document.getElementById('orb');
+  orb.className = 'status-orb';
+  document.getElementById('ollamaStatus').textContent = 'Nicht verbunden';
+}
+
+async function connectAI() {
+  const p = getProvider();
+  if (p === 'openai') {
+    await connectOpenAI();
+  } else {
+    await connectOllama();
+  }
+}
+
 async function connectOllama() {
   const url = document.getElementById('ollamaUrl').value.trim();
   const orb = document.getElementById('orb');
   const txt = document.getElementById('ollamaStatus');
-  orb.className='status-orb spin'; txt.textContent='Verbinde mit Ollama…';
+  orb.className = 'status-orb spin'; txt.textContent = 'Verbinde mit Ollama…';
   try {
     const r = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(4000) });
-    if (!r.ok) throw new Error('HTTP '+r.status);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
-    const models = (d.models||[]).map(m=>m.name).join(', ') || '(keine Modelle geladen)';
-    orb.className='status-orb on';
-    txt.textContent = `Verbunden · ${models}`;
+    const models = (d.models||[]).map(m => m.name).join(', ') || '(keine Modelle)';
+    orb.className = 'status-orb on';
+    txt.textContent = `🦙 Ollama · ${models}`;
     G.connected = true;
   } catch(e) {
-    orb.className='status-orb err';
+    orb.className = 'status-orb err';
     txt.textContent = `Fehler: ${e.message} — Läuft "ollama serve"?`;
     G.connected = false;
   }
 }
 
-// ══════════════════════════════
-//  CONVERSATION ENGINE
-//  Ansatz A: Browser-Memory (aktiv)
-//  Ansatz B: SQLite API (nachrüstbar via G.apiMode = 'api')
-// ══════════════════════════════
+async function connectOpenAI() {
+  const key = document.getElementById('openaiKey').value.trim();
+  const orb = document.getElementById('orb');
+  const txt = document.getElementById('ollamaStatus');
+  if (!key) {
+    orb.className = 'status-orb err';
+    txt.textContent = 'API Key fehlt — sk-... eingeben';
+    return;
+  }
+  orb.className = 'status-orb spin'; txt.textContent = 'Verbinde mit OpenAI…';
+  try {
+    const r = await fetch('https://api.openai.com/v1/models', {
+      headers: { 'Authorization': `Bearer ${key}` },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status + ' — Key ungültig?');
+    orb.className = 'status-orb on';
+    txt.textContent = '✦ ChatGPT · Verbunden';
+    G.connected = true;
+  } catch(e) {
+    orb.className = 'status-orb err';
+    txt.textContent = `OpenAI Fehler: ${e.message}`;
+    G.connected = false;
+  }
+}
 
+// Haupt-Generierungsfunktion — wählt Provider automatisch
+async function ollamaGenerate(userPrompt, imgBase64) {
+  const userMsg = { role: 'user', content: userPrompt };
+  if (imgBase64) userMsg.images = [imgBase64.split(',')[1]];
+  G.conversation.push(userMsg);
+
+  // Phase B: Backend-API
+  if (G.apiMode === 'api') return await ollamaViaBackend(userPrompt, imgBase64);
+
+  // Phase A: direkt je nach Provider
+  let responseText = '';
+  if (getProvider() === 'openai') {
+    responseText = await generateOpenAI(imgBase64);
+  } else {
+    responseText = await generateOllama(imgBase64);
+  }
+
+  G.conversation.push({ role: 'assistant', content: responseText });
+  saveSessionLocal();
+  return responseText;
+}
+
+// ── Ollama direkt ──
+async function generateOllama(imgBase64) {
+  const url   = document.getElementById('ollamaUrl').value.trim();
+  const model = document.getElementById('ollamaModel').value.trim() || 'llama3.1:8b';
+  const messages = G.conversation.map(m => {
+    const msg = { role: m.role, content: m.content };
+    if (m.images) msg.images = m.images;
+    return msg;
+  });
+  try {
+    const r = await fetch(`${url}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, messages, stream: false }),
+      signal: AbortSignal.timeout(getTimeoutMs()),
+    });
+    if (r.ok) return (await r.json()).message?.content || '';
+    throw new Error('chat not available');
+  } catch(e) {
+    // Fallback /api/generate
+    const ctx = G.conversation.filter(m => m.role !== 'system').slice(-6)
+      .map(m => (m.role === 'user' ? '### SPIELER:\n' : '### WELT:\n') + m.content).join('\n\n');
+    const body = { model, prompt: buildSystemPrompt() + '\n\n' + ctx, stream: false };
+    if (imgBase64) body.images = [imgBase64.split(',')[1]];
+    const r2 = await fetch(`${url}/api/generate`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body), signal: AbortSignal.timeout(getTimeoutMs()),
+    });
+    if (!r2.ok) throw new Error('Ollama HTTP ' + r2.status);
+    return (await r2.json()).response || '';
+  }
+}
+
+// ── OpenAI / ChatGPT ──
+async function generateOpenAI(imgBase64) {
+  const key   = document.getElementById('openaiKey').value.trim();
+  const model = document.getElementById('openaiModel').value || 'gpt-4o';
+  if (!key) throw new Error('OpenAI API Key fehlt');
+
+  // Messages für OpenAI aufbauen (images als content-array)
+  const messages = G.conversation.map(m => {
+    if (m.images && m.images.length > 0) {
+      // Vision: content als Array
+      return { role: m.role, content: [
+        { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${m.images[0]}` } },
+        { type: 'text', text: m.content },
+      ]};
+    }
+    return { role: m.role, content: m.content };
+  });
+
+  const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${key}`,
+    },
+    body: JSON.stringify({ model, messages, max_tokens: 800 }),
+    signal: AbortSignal.timeout(getTimeoutMs()),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({}));
+    throw new Error(`OpenAI ${r.status}: ${err.error?.message || r.statusText}`);
+  }
+  const d = await r.json();
+  return d.choices?.[0]?.message?.content || '';
+}
+
+
+
+// Startet eine neue Konversations-Session
 function sessionUUID() {
   return 'sess-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7);
 }
 
-// Startet eine neue Konversations-Session
 function startSession() {
   G.sessionId   = sessionUUID();
   G.sessionName = `${G.gameName} — ${new Date().toLocaleDateString('de-CH')}`;
@@ -1789,7 +1949,10 @@ async function callWorld() {
     document.getElementById('txtInput2').value = '';
   } catch(e) {
     loading.remove();
-    err.textContent = `Fehler: ${e.message} — Ist "ollama serve" gestartet?`;
+    const prov = getProvider();
+    err.textContent = prov === 'openai'
+      ? `OpenAI Fehler: ${e.message}`
+      : `Ollama Fehler: ${e.message} — Ist "ollama serve" gestartet?`;
     err.style.display = 'block';
   }
   btn.disabled = false;

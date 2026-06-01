@@ -98,6 +98,24 @@ def session_dict(row, msgs=None):
         d['conversation'] = msgs
     return d
 
+OPENAI_KEY = os.getenv('OPENAI_API_KEY', '')
+
+async def call_ai(messages, openai_key=''):
+    """Ollama lokal oder OpenAI Cloud — je nach Konfiguration."""
+    key = openai_key or OPENAI_KEY
+    if key:
+        return await call_openai(messages, key)
+    return await call_ollama(messages)
+
+async def call_openai(messages, key):
+    model = os.getenv('OPENAI_MODEL', 'gpt-4o')
+    async with httpx.AsyncClient(timeout=300) as client:
+        r = await client.post('https://api.openai.com/v1/chat/completions',
+            headers={'Authorization': f'Bearer {key}'},
+            json={'model': model, 'messages': messages, 'max_tokens': 800})
+        r.raise_for_status()
+        return r.json()['choices'][0]['message']['content']
+
 async def call_ollama(messages):
     async with httpx.AsyncClient(timeout=300) as client:
         try:

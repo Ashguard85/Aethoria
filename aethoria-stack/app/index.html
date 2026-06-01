@@ -862,6 +862,9 @@ textarea::placeholder { color:rgba(242,232,204,0.25); font-style:italic; }
       <input id="ollamaUrl" value="__OLLAMA_URL__" placeholder="/ollama" type="text">
       <label>Modell</label>
       <input id="ollamaModel" value="__OLLAMA_MODEL__" type="text" style="width:100px">
+      <label>Timeout</label>
+      <input id="ollamaTimeout" value="300" type="number" min="30" max="600" style="width:60px" title="Sekunden">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--vellum4)">s</span>
       <button class="btn-connect" onclick="connectOllama()">Verbinden</button>
       <span id="apiModeBadge" style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;padding:0.2rem 0.5rem;border-radius:3px;border:1px solid;opacity:0.8"></span>
     </div>
@@ -1135,6 +1138,11 @@ const TYPE_TAGS = {
 // ══════════════════════════════
 const DEFAULT_NAMES = ['Aldric','Brienna','Corvus','Dahlia','Ezra','Fenna'];
 
+function getTimeoutMs() {
+  const v = parseInt(document.getElementById('ollamaTimeout')?.value || '300');
+  return Math.max(30, Math.min(600, v)) * 1000;
+}
+
 function buildPlayerRows() {
   const n = +document.getElementById('playerCount').value;
   const wrap = document.getElementById('playerSetupRows');
@@ -1370,7 +1378,7 @@ async function ollamaGenerate(userPrompt, imgBase64) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, messages, stream: false }),
-      signal: AbortSignal.timeout(90000),
+      signal: AbortSignal.timeout(getTimeoutMs()),
     });
     if (r.ok) {
       const d = await r.json();
@@ -1392,7 +1400,7 @@ async function ollamaGenerate(userPrompt, imgBase64) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(90000),
+      signal: AbortSignal.timeout(getTimeoutMs()),
     });
     if (!r2.ok) throw new Error('Ollama HTTP ' + r2.status);
     responseText = (await r2.json()).response || '';
@@ -1416,7 +1424,7 @@ async function ollamaViaBackend(userPrompt, imgBase64) {
       mood: MOODS[G.moodIdx],
       players: G.players.map(p => ({ name: p.name, faction: p.fac.name, pts: p.pts })),
     }),
-    signal: AbortSignal.timeout(90000),
+    signal: AbortSignal.timeout(getTimeoutMs()),
   });
   if (!r.ok) throw new Error('Backend HTTP ' + r.status);
   const d = await r.json();

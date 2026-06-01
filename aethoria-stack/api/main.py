@@ -98,7 +98,7 @@ def session_dict(row, msgs=None):
     return d
 
 async def call_ollama(messages):
-    async with httpx.AsyncClient(timeout=120) as client:
+    async with httpx.AsyncClient(timeout=300) as client:
         try:
             r = await client.post(f'{OLLAMA_URL}/api/chat',
                 json={'model': OLLAMA_MODEL, 'messages': messages, 'stream': False})
